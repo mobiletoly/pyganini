@@ -1,0 +1,48 @@
+<section id="users-directory">
+  {% if directory.show_create %}
+  <form
+    id="contact-form"
+    method="post"
+    action="{{ directory.urls.create_url }}"
+    enctype="multipart/form-data"
+    hx-encoding="multipart/form-data"
+    hx-post="{{ directory.urls.create_url }}"
+    hx-target="#users-directory"
+    hx-swap="outerHTML">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field">
+      <label for="contact-name">Name</label>
+      <input id="contact-name" name="name" value="{{ form.name }}">
+      {% if form.name_error %}<p id="contact-name-error" class="error">{{ form.name_error }}</p>{% endif %}
+    </div>
+    <div class="field">
+      <label for="contact-status">Status</label>
+      <select id="contact-status" name="status">
+        <option value="Active"{% if form.status == "Active" %} selected{% endif %}>Active</option>
+        <option value="Inactive"{% if form.status == "Inactive" %} selected{% endif %}>Inactive</option>
+      </select>
+      {% if form.status_error %}<p id="contact-status-error" class="error">{{ form.status_error }}</p>{% endif %}
+    </div>
+    <div class="field">
+      <label for="contact-avatar">Avatar upload</label>
+      <input id="contact-avatar" name="avatar" type="file">
+      {% if upload_filename %}<p id="upload-filename">{{ upload_filename }}</p>{% endif %}
+    </div>
+    <button type="submit">Add contact</button>
+  </form>
+  {% endif %}
+  <div class="filters" aria-label="Filter contacts by status">
+    <a href="{{ filter_urls.all }}" hx-get="{{ filter_urls.all }}" hx-target="#users-table-slot" hx-swap="innerHTML">All</a>
+    <a href="{{ filter_urls.active }}" hx-get="{{ filter_urls.active }}" hx-target="#users-table-slot" hx-swap="innerHTML">Active only</a>
+    <a href="{{ filter_urls.inactive }}" hx-get="{{ filter_urls.inactive }}" hx-target="#users-table-slot" hx-swap="innerHTML">Inactive only</a>
+  </div>
+  <div id="users-table-slot">
+    {% if inspect_table_fragment %}
+    {% call pyganini_inspection.fragment("/table") %}
+    {% include "mounts/contact_directory/table.jinja" %}
+    {% endcall %}
+    {% else %}
+    {% include "mounts/contact_directory/table.jinja" %}
+    {% endif %}
+  </div>
+</section>

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ metadata.title }}</title>
+    <meta name="description" content="{{ metadata.description }}">
+    <meta name="{{ layout.csrf_meta_name }}" content="{{ layout.csrf_token }}">
+    <link data-asset="app.css" rel="stylesheet" href="{{ layout.stylesheet_url }}">
+    <script data-asset="vendor/htmx.min.js" src="{{ layout.htmx_script_url }}" defer></script>
+    <script data-asset="app.js" type="module" src="{{ layout.app_script_url }}"></script>
+  </head>
+  <body hx-boost:inherited="true">
+    <header>
+      <nav aria-label="Primary navigation">
+        <a href="{{ layout.root_url }}">Project editor</a>
+        <a href="{{ layout.about_url }}">About</a>
+      </nav>
+    </header>
+    <main id="page-content">{{ child }}</main>
+    <footer><small>Application-owned Svelte island</small></footer>
+  </body>
+</html>

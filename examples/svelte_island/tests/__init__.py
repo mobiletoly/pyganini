@@ -1,0 +1,1 @@
+"""Svelte island example tests."""

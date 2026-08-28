@@ -1,0 +1,25 @@
+<div id="users-table">
+  <h3>Contacts</h3>
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Status</th><th>Upload</th></tr>
+    </thead>
+    <tbody>
+      {% for contact in contacts %}
+      <tr>
+        <td>
+          {% if directory.urls.detail_url %}
+          <a href="{{ directory.urls.detail_url(contact.identifier) }}">{{ contact.name }}</a>
+          {% else %}
+          {{ contact.name }}
+          {% endif %}
+        </td>
+        <td>{{ contact.status }}</td>
+        <td>{{ contact.avatar_filename or "None" }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3">No contacts match this filter.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

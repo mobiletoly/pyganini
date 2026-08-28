@@ -1,0 +1,29 @@
+.idea
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# uv environment
+.venv/
+
+# Test, lint, type-check, and coverage artifacts
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Python packaging artifacts
+build/
+dist/
+*.egg-info/
+
+# macOS metadata
+.DS_Store
+
+/AGENTS.md
+#/docs/spec/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-*.md

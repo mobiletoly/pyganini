@@ -1,0 +1,12 @@
+<section class="page-intro">
+  <p class="eyebrow">Bounded client island</p>
+  <h1>React project editor</h1>
+  <p>Pyganini owns this page. The application owns the interactive editor below.</p>
+</section>
+<div
+  data-client-island="project-editor"
+  data-project-name="{{ project_name }}"
+  data-project-pinned="{{ "true" if project_pinned else "false" }}"
+  data-save-url="{{ save_url }}"
+  data-cancel-url="{{ cancel_url }}"
+></div>

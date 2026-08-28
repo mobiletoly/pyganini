@@ -1,0 +1,21 @@
+<section data-page="users">
+  <nav aria-label="Breadcrumb">
+    <ol>
+      {% for step in navigation.trail %}
+      <li>
+        {% if step.current %}<span aria-current="page">{{ step.label }}</span>{% else %}<a href="{{ step.href }}">{{ step.label }}</a>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </nav>
+  {% if navigation.back.ok %}<p><a href="{{ navigation.back.href }}">Back to {{ navigation.back.label }}</a></p>{% endif %}
+  <h2>Manage contacts</h2>
+  {% if directory.show_create %}
+  <p>Create a contact with ordinary HTML or enhance the same form with HTMX.</p>
+  {% else %}
+  <p>Read-only contact directory supplied by this route owner.</p>
+  {% endif %}
+  {% call pyganini_inspection.component("Contact directory") %}
+  {% include "mounts/contact_directory/directory.jinja" %}
+  {% endcall %}
+</section>

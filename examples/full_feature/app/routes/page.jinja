@@ -1,0 +1,29 @@
+<section data-page="home">
+  <nav aria-label="Breadcrumb">
+    <ol>
+      {% for step in navigation.trail %}
+      <li>
+        {% if step.current %}<span aria-current="page">{{ step.label }}</span>{% else %}<a href="{{ step.href }}">{{ step.label }}</a>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </nav>
+  <p class="eyebrow">Server-first example</p>
+  <h1>Contact Directory</h1>
+  <p>Pyganini keeps routes, templates, HTMX behavior, and generated URLs visible.</p>
+  <p>
+    <a class="button" href="{{ urls.users.path }}">Open the contact directory</a>
+    <a href="{{ urls.settings.path }}">Read the settings page</a>
+  </p>
+  <p><a href="{{ urls.problem.path }}">View the rendered problem demonstration</a></p>
+  <section aria-labelledby="named-sse-heading">
+    <h2 id="named-sse-heading">Named SSE event</h2>
+    <div
+      id="named-sse-events"
+      hx-sse:connect="{{ events_url }}"
+      pyganini-sse-event="contact"
+      hx-config='{"sse":{"reconnect":false,"pauseOnBackground":false}}'
+      hx-swap="beforeend">
+    </div>
+  </section>
+</section>

@@ -1,0 +1,19 @@
+<section data-page="settings">
+  <nav aria-label="Breadcrumb">
+    <ol>
+      {% for step in navigation.trail %}
+      <li>
+        {% if step.current %}<span aria-current="page">{{ step.label }}</span>{% else %}<a href="{{ step.href }}">{{ step.label }}</a>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </nav>
+  <p class="eyebrow">Static route</p>
+  <h1>Settings</h1>
+  <p>This page demonstrates a synchronous route handler and active navigation.</p>
+  <dl>
+    <div><dt>Storage</dt><dd>In memory</dd></div>
+    <div><dt>Renderer</dt><dd>Jinja with strict undefined values</dd></div>
+    <div><dt>Browser policy</dt><dd>Local HTMX and bounded application JavaScript</dd></div>
+  </dl>
+</section>

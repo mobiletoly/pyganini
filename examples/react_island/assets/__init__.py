@@ -1,0 +1,1 @@
+"""Generated asset lookup package."""

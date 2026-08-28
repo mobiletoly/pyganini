@@ -1,0 +1,36 @@
+[project]
+name = "pyganini-qualification-probes"
+version = "0.0.0"
+requires-python = ">=3.13,<3.15"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "mypy==2.3.1",
+    "pyright==1.1.411",
+    "pytest==9.1.1",
+    "ruff==0.16.3",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+filterwarnings = ["error"]

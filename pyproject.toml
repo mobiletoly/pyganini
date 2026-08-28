@@ -1,0 +1,69 @@
+[project]
+name = "pyganini"
+version = "0.0.0"
+description = "Server-first, HTML-first, HTMX-native Python web framework"
+readme = "README.md"
+requires-python = ">=3.13"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Toly Pochkin" }]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Web Environment",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Typing :: Typed",
+]
+dependencies = [
+    "anyio>=4.14.2,<4.15",
+    "jinja2>=3.1.6,<4",
+    "python-multipart>=0.0.32,<0.0.33",
+    "starlette>=1.6.0,<1.7",
+]
+
+[project.scripts]
+pyganini = "pyganini._cli:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13"]
+build-backend = "uv_build"
+
+[dependency-groups]
+test = [
+    "fastapi==0.141.1",
+    "httpx==0.28.1",
+    "httpx2==2.12.0",
+    "pytest==9.1.1",
+]
+lint = ["ruff==0.16.3"]
+typing = [
+    "mypy==2.3.1",
+    "pyright==1.1.411",
+]
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    { include-group = "typing" },
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error"]

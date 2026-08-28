@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ metadata.title }}</title>
+    <meta name="description" content="{{ metadata.description }}">
+    <link rel="stylesheet" href="{{ layout.stylesheet_url }}">
+    <script src="{{ layout.htmx_script_url }}"></script>
+    <script src="{{ layout.sse_extension_script_url }}"></script>
+    <script src="{{ layout.sse_helper_script_url }}"></script>
+    {% if layout.template_inspector_script_url %}
+    <script src="{{ layout.template_inspector_script_url }}" defer></script>
+    {% endif %}
+    <script src="{{ layout.app_script_url }}" defer></script>
+  </head>
+  <body>
+    <header data-layout="root">
+      <nav aria-label="Primary navigation">
+        <a href="{{ layout.urls.root.path }}">Pyganini Directory</a>
+        <a href="{{ layout.urls.users.path }}"{% if layout.active_nav == "users" %} aria-current="page"{% endif %}>Contacts</a>
+        <a href="{{ layout.urls.settings.path }}"{% if layout.active_nav == "settings" %} aria-current="page"{% endif %}>Settings</a>
+      </nav>
+    </header>
+    <main id="page-content">{{ child }}</main>
+    <footer><small>Application-owned Starlette host</small></footer>
+  </body>
+</html>

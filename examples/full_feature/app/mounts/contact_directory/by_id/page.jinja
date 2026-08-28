@@ -1,0 +1,20 @@
+<article data-page="contact-detail">
+  <nav aria-label="Breadcrumb">
+    <ol>
+      {% for step in navigation.trail %}
+      <li>
+        {% if step.current %}<span aria-current="page">{{ step.label }}</span>{% else %}<a href="{{ step.href }}">{{ step.label }}</a>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </nav>
+  {% if navigation.back.ok %}<p><a href="{{ navigation.back.href }}">Back to {{ navigation.back.label }}</a></p>{% endif %}
+  <p class="eyebrow">Dynamic route</p>
+  <h2>{{ contact.name }}</h2>
+  <dl>
+    <div><dt>Identifier</dt><dd>{{ contact.identifier }}</dd></div>
+    <div><dt>Status</dt><dd>{{ contact.status }}</dd></div>
+    <div><dt>Upload</dt><dd>{{ contact.avatar_filename or "None" }}</dd></div>
+  </dl>
+  <p><a href="{{ directory.urls.page_url }}">Back to contacts</a></p>
+</article>

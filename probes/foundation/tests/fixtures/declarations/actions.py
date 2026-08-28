@@ -1,0 +1,2 @@
+def save() -> None:
+    pass

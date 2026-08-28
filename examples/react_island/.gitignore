@@ -1,0 +1,14 @@
+/.venv/
+/.pytest_cache/
+/.ruff_cache/
+/.mypy_cache/
+/.pyright/
+/node_modules/
+/playwright-report/
+/test-results/
+__pycache__/
+*.pyc
+!/assets/build/
+!/assets/build/**
+!/assets/dist/
+!/assets/dist/**

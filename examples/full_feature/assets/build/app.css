@@ -1,0 +1,95 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, sans-serif;
+  color: #17202a;
+  background: #f4f7f9;
+}
+
+body {
+  margin: 0 auto;
+  max-width: 60rem;
+  padding: 0 1rem 3rem;
+}
+
+header {
+  border-bottom: 1px solid #d5dde3;
+  padding: 1rem 0;
+}
+
+nav,
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+main {
+  padding: 2rem 0;
+}
+
+section,
+article {
+  background: white;
+  border: 1px solid #d5dde3;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.section-heading {
+  margin-bottom: 1rem;
+}
+
+.eyebrow {
+  color: #4b6475;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+  margin: 1rem 0;
+  max-width: 32rem;
+}
+
+input,
+select,
+button {
+  font: inherit;
+  padding: 0.5rem;
+}
+
+button,
+.button {
+  background: #155eef;
+  border: 0;
+  border-radius: 0.25rem;
+  color: white;
+  cursor: pointer;
+  display: inline-block;
+  padding: 0.6rem 0.9rem;
+  text-decoration: none;
+}
+
+.error {
+  color: #b42318;
+  margin: 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+th,
+td {
+  border-bottom: 1px solid #e2e8ed;
+  padding: 0.6rem;
+  text-align: left;
+}
+
+footer {
+  color: #4b6475;
+}
