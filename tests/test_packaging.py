@@ -59,7 +59,7 @@ def _package_contract(path: Path) -> tuple[set[str], tuple[str, ...]]:
 
 def test_wheel_metadata_entry_point_and_contents(package_build: PackageBuild) -> None:
     wheel = package_build.wheel
-    assert wheel.name == "pyganini-0.0.0-py3-none-any.whl"
+    assert wheel.name == "pyganini-0.1.0-py3-none-any.whl"
     names = _wheel_names(wheel)
     assert {
         name
@@ -67,7 +67,7 @@ def test_wheel_metadata_entry_point_and_contents(package_build: PackageBuild) ->
         if name.startswith("pyganini/") and not name.endswith("/")
     } == PACKAGE_FILES
     assert all(
-        name.startswith(("pyganini/", "pyganini-0.0.0.dist-info/")) for name in names
+        name.startswith(("pyganini/", "pyganini-0.1.0.dist-info/")) for name in names
     )
     assert any(name.endswith(".dist-info/licenses/LICENSE") for name in names)
     assert any(name.endswith(".dist-info/entry_points.txt") for name in names)
@@ -88,11 +88,18 @@ def test_wheel_metadata_entry_point_and_contents(package_build: PackageBuild) ->
 
     metadata = _metadata(wheel)
     assert metadata["Name"] == "pyganini"
-    assert metadata["Version"] == "0.0.0"
+    assert metadata["Version"] == "0.1.0"
     assert metadata["Requires-Python"] == ">=3.13"
     assert metadata["License-Expression"] == "Apache-2.0"
     classifiers = metadata.get_all("Classifier") or []
+    assert "Development Status :: 3 - Alpha" in classifiers
     assert not any(value.startswith("License ::") for value in classifiers)
+    assert metadata.get_all("Project-URL") == [
+        "Homepage, https://github.com/mobiletoly/pyganini",
+        "Repository, https://github.com/mobiletoly/pyganini",
+        "Issues, https://github.com/mobiletoly/pyganini/issues",
+        "Documentation, https://github.com/mobiletoly/pyganini/tree/main/docs/user",
+    ]
     assert metadata.get_all("Requires-Dist") == [
         "anyio>=4.14.2,<4.15",
         "jinja2>=3.1.6,<4",
@@ -117,7 +124,7 @@ def test_source_distribution_has_exact_project_boundary(
 ) -> None:
     with tarfile.open(package_build.sdist, "r:gz") as archive:
         names = set(archive.getnames())
-    root = "pyganini-0.0.0/"
+    root = "pyganini-0.1.0/"
     assert {
         name
         for name in names

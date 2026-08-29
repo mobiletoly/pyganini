@@ -1,0 +1,124 @@
+name: Publish release to PyPI
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+[ab][0-9]+"
+
+jobs:
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.3"
+          enable-cache: false
+
+      - name: Install Python 3.14
+        run: uv python install 3.14
+
+      - name: Match the tag to the project version
+        shell: bash
+        run: |
+          project_version="$(uv run --isolated --no-project --python 3.14 python -c 'import pathlib, tomllib; data = tomllib.loads(pathlib.Path("pyproject.toml").read_text(encoding="utf-8")); print(data["project"]["version"])')"
+          tag_version="${GITHUB_REF_NAME#v}"
+          test "$tag_version" = "$project_version"
+
+      - name: Check the lockfile
+        run: uv lock --check
+
+      - name: Build wheel and source distribution
+        run: uv build --no-sources
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  verify:
+    name: Verify distributions on Python ${{ matrix.python-version }}
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.13"
+          - "3.14"
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.3"
+          enable-cache: false
+
+      - name: Download distributions
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
+
+      - name: Smoke test the wheel
+        shell: bash
+        run: |
+          uv run --isolated --no-project --python "${{ matrix.python-version }}" \
+            --with dist/*.whl python scripts/smoke-release-artifact.py \
+            --expected-version "${GITHUB_REF_NAME#v}"
+
+      - name: Smoke test the source distribution
+        shell: bash
+        run: |
+          uv run --isolated --no-project --python "${{ matrix.python-version }}" \
+            --with dist/*.tar.gz python scripts/smoke-release-artifact.py \
+            --expected-version "${GITHUB_REF_NAME#v}"
+
+  publish:
+    name: Publish distributions
+    needs:
+      - verify
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pyganini
+    permissions:
+      id-token: write
+    steps:
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.3"
+          enable-cache: false
+
+      - name: Download distributions
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
+
+      - name: Generate PEP 740 attestations
+        uses: astral-sh/attest-action@f589a42a7efb6fe400b4f400de60b4bc90390027 # v0.0.6
+
+      - name: Publish to PyPI
+        run: uv publish

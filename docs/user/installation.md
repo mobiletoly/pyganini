@@ -1,15 +1,19 @@
 # Installation
 
-Pyganini supports CPython 3.13 and newer. Install an explicit Pyganini wheel or source
-distribution artifact with any compliant Python package installer:
+Pyganini supports CPython 3.13 and newer. Install the 0.1.0 release with any
+compliant Python package installer:
 
 ```text
-python -m pip install ./dist/pyganini-0.0.0-py3-none-any.whl
-python -m pip install ./dist/pyganini-0.0.0.tar.gz
+python -m pip install pyganini==0.1.0
 ```
 
-The project has not published `pyganini` to a package index. Do not treat the
-distribution name as evidence that an index install is available.
+Maintainers can test a release candidate from built artifacts before
+publication:
+
+```text
+python -m pip install ./dist/pyganini-0.1.0-py3-none-any.whl
+python -m pip install ./dist/pyganini-0.1.0.tar.gz
+```
 
 The runtime distribution depends on compatible Starlette 1.6, Jinja 3, AnyIO
 4.14, and python-multipart 0.0.32 releases:

@@ -1,6 +1,6 @@
 [project]
 name = "pyganini"
-version = "0.0.0"
+version = "0.1.0"
 description = "Server-first, HTML-first, HTMX-native Python web framework"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -8,7 +8,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [{ name = "Toly Pochkin" }]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Environment :: Web Environment",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
@@ -23,6 +23,12 @@ dependencies = [
     "python-multipart>=0.0.32,<0.0.33",
     "starlette>=1.6.0,<1.7",
 ]
+
+[project.urls]
+Homepage = "https://github.com/mobiletoly/pyganini"
+Repository = "https://github.com/mobiletoly/pyganini"
+Issues = "https://github.com/mobiletoly/pyganini/issues"
+Documentation = "https://github.com/mobiletoly/pyganini/tree/main/docs/user"
 
 [project.scripts]
 pyganini = "pyganini._cli:main"

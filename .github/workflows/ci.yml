@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Python 3.14 quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.3"
+          enable-cache: true
+
+      - name: Install Python 3.14
+        run: uv python install 3.14
+
+      - name: Check the lockfile
+        run: uv lock --check
+
+      - name: Install development dependencies
+        run: uv sync --locked --all-groups --python 3.14
+
+      - name: Check formatting
+        run: uv run --locked --python 3.14 ruff format --check .
+
+      - name: Lint
+        run: uv run --locked --python 3.14 ruff check .
+
+      - name: Check framework typing with mypy
+        run: uv run --locked --python 3.14 mypy src/pyganini
+
+      - name: Check framework typing with Pyright
+        run: uv run --locked --python 3.14 pyright src/pyganini
+
+      - name: Check public consumer typing
+        run: >-
+          uv run --locked --python 3.14 pytest -q
+          tests/test_csrf_typing.py
+          tests/test_sse_typing.py
+          tests/test_assets.py::test_generated_asset_consumers_are_checked_by_both_type_checkers
+
+      - name: Run the test suite
+        run: uv run --locked --python 3.14 pytest
+
+  compatibility:
+    name: Python 3.13 compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.3"
+          enable-cache: true
+
+      - name: Install Python 3.13
+        run: uv python install 3.13
+
+      - name: Install development dependencies
+        run: uv sync --locked --all-groups --python 3.13
+
+      - name: Run the test suite
+        run: uv run --locked --python 3.13 pytest
