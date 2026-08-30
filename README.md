@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/pyganini-logo-dark.svg">
+    <img src="docs/assets/pyganini-logo-light.svg" alt="Pyganini violin and snake logo" width="112">
+  </picture>
+</p>
+
 # Pyganini
 
 [![CI](https://github.com/mobiletoly/pyganini/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mobiletoly/pyganini/actions/workflows/ci.yml)
