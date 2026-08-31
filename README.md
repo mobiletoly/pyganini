@@ -11,13 +11,14 @@
 [![Latest Release](https://img.shields.io/github/v/release/mobiletoly/pyganini?sort=semver)](https://github.com/mobiletoly/pyganini/releases/latest)
 [![License](https://img.shields.io/github/license/mobiletoly/pyganini?logo=apache&label=License)](LICENSE)
 
+**If Pyganini saves you time, please consider starring ⭐ the repository - it
+helps more developers find it.**
+
 Pyganini is a server-first Python web framework for HTML applications. You
 organize routes as Python packages, render Jinja templates, and use generated
 URL helpers instead of handwritten paths. Pyganini supports visible HTMX
 interactions while your application keeps control of Starlette or FastAPI,
 middleware, data access, and deployment.
-
-If Pyganini helps your project, please [star the repository](https://github.com/mobiletoly/pyganini).
 
 ## Why Pyganini?
 
@@ -189,39 +190,33 @@ sessions, storage, middleware, static serving, and process management.
 
 ## How Pyganini Apps Are Shaped
 
-A larger application can grow from the same route tree:
+A larger application can use this route map:
 
 ```text
-pyproject.toml
+pyproject.toml                 -> dependencies and Pyganini configuration
 app/
-  __init__.py
-  main.py
+  main.py                      -> Starlette or FastAPI host
   routes/
-    __init__.py
-    route.py
-    handlers.py
-    layout.py
-    layout.jinja
-    page.jinja
-    users/
-      __init__.py
-      route.py
-      handlers.py
-      page.jinja
-      by_user_id/
-        __init__.py
-        route.py
-        handlers.py
-        page.jinja
+    route.py                   -> declares GET /
+    handlers.py                -> request handlers for /
+    layout.py                  -> layout marker for / and descendants
+    layout.jinja               -> layout HTML for / and descendants
+    page.jinja                 -> page HTML for GET /
+    users/                     -> /users
+      route.py                 -> declares GET /users, fragments, and actions
+      handlers.py              -> request handlers for /users
+      page.jinja               -> page HTML for GET /users
+      by_user_id/              -> /users/{user_id}
+        route.py               -> declares GET /users/{user_id}
+        handlers.py            -> request handlers for /users/{user_id}
+        page.jinja             -> page HTML for GET /users/{user_id}
   shared/
     reports/
-      __init__.py
-      page.jinja
+      page.jinja               -> route-kit HTML; no URL until a route uses it
   _pyganini/
-    .pyganini-root
-    __init__.py
-    asgi.py
-    urls.py
+    .pyganini-root             -> generated-root ownership marker
+    asgi.py                    -> generated Starlette dispatch and router
+    urls.py                    -> generated typed URL helpers
 ```
 
 Static package names map underscores to URL hyphens. A package named
