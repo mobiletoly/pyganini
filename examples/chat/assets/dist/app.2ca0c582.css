@@ -1,0 +1,164 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, sans-serif;
+  background: #f3f6f8;
+  color: #1f2937;
+}
+
+body {
+  margin: 0;
+}
+
+.page-shell {
+  box-sizing: border-box;
+  margin: 0 auto;
+  max-width: 800px;
+  min-height: 100vh;
+  padding: 32px 20px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #d7dde5;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 8%);
+  padding: 24px;
+}
+
+.stack {
+  display: grid;
+  gap: 16px;
+}
+
+.stack > * {
+  margin-block: 0;
+}
+
+.eyebrow {
+  color: #526071;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chat-header {
+  align-items: start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.chat-log {
+  background: #f9fbfc;
+  border: 1px solid #d7dde5;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  max-height: 60vh;
+  min-height: 240px;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.message {
+  background: #ffffff;
+  border: 1px solid #d7dde5;
+  border-radius: 7px;
+  padding: 10px 12px;
+}
+
+.message header {
+  color: #526071;
+  display: flex;
+  font-size: 0.875rem;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.message p {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+}
+
+form,
+.field {
+  display: grid;
+  gap: 10px;
+}
+
+label {
+  font-weight: 650;
+}
+
+input,
+textarea,
+button {
+  font: inherit;
+}
+
+input,
+textarea {
+  background: white;
+  border: 1px solid #aeb8c5;
+  border-radius: 6px;
+  box-sizing: border-box;
+  color: inherit;
+  padding: 10px;
+  width: 100%;
+}
+
+textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+button {
+  background: #0f766e;
+  border: 0;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-weight: 700;
+  justify-self: start;
+  padding: 10px 14px;
+}
+
+button:hover {
+  background: #115e59;
+}
+
+.secondary-button {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.secondary-button:hover {
+  background: #d1d5db;
+}
+
+.composer-actions {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.send-progress {
+  color: #526071;
+  display: none;
+}
+
+.send-progress.htmx-request {
+  display: inline;
+}
+
+.error {
+  color: #b42318;
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .chat-header {
+    flex-direction: column;
+  }
+}

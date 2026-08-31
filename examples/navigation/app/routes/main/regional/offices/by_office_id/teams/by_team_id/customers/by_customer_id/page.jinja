@@ -1,0 +1,9 @@
+<section class="card" data-page="customer" data-customer="{{ customer.identifier }}">
+  <p class="eyebrow">Regional customer</p>
+  <h1>{{ customer.name }}</h1>
+  <p>Risk: {{ customer.risk }}</p>
+  <div class="route-links">
+    <a href="{{ local_report_url }}">Customer report subtree</a>
+    <a href="{{ shared_report_url }}">Shared report destination</a>
+  </div>
+</section>

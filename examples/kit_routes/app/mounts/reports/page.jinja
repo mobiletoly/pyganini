@@ -1,0 +1,33 @@
+<section class="card stack" data-page="reports" data-audience="{{ report.audience }}">
+  <p class="eyebrow">{{ report.audience }}</p>
+  <h1>{{ report.heading }}</h1>
+  <p>{{ report.description }}</p>
+  {% if report.show_audit and report.urls.audit_url %}
+  <p><a href="{{ report.urls.audit_url }}">Admin report tools</a></p>
+  {% endif %}
+  <div class="report-actions">
+    <label for="report-period">Period</label>
+    <select
+      id="report-period"
+      name="period"
+      hx-get="{{ report.urls.table_url }}"
+      hx-target="#report-table-slot"
+      hx-swap="innerHTML"
+      hx-trigger="change">
+      {% for period in report.periods %}
+      <option value="{{ period.value }}"{% if period.value == selected_period %} selected{% endif %}>{{ period.label }}</option>
+      {% endfor %}
+    </select>
+    <button
+      type="button"
+      hx-get="{{ report.urls.table_url }}"
+      hx-target="#report-table-slot"
+      hx-swap="innerHTML">
+      Refresh table
+    </button>
+  </div>
+  <div id="report-table-slot">
+    {% include "mounts/reports/table.jinja" %}
+  </div>
+</section>
+

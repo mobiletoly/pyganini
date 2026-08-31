@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ metadata.title }}</title>
+    <meta name="description" content="{{ metadata.description }}">
+    <link rel="stylesheet" href="{{ layout.stylesheet_url }}">
+    <script src="{{ layout.htmx_script_url }}"></script>
+  </head>
+  <body>
+    <header class="app-header" data-layout="root">
+      <a class="brand" href="{{ layout.urls.root.path }}">Pyganini Kit Routes</a>
+      <nav aria-label="Example routes">
+        <a href="{{ layout.urls.admin.reports.path }}">Admin reports</a>
+        <a href="{{ layout.urls.user.reports.path }}">User reports</a>
+      </nav>
+    </header>
+    <main class="app-shell">{{ child }}</main>
+  </body>
+</html>
+

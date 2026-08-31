@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ metadata.title }}</title>
+    <meta name="description" content="{{ metadata.description }}">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E">
+    <link rel="stylesheet" href="{{ layout.stylesheet_url }}">
+  </head>
+  <body data-layout="root">
+    <header class="site-header">
+      <strong>Pyganini Navigation</strong>
+      <nav aria-label="Primary navigation">
+        <a href="{{ layout.urls.root.path }}">Home</a>
+        <a href="{{ layout.urls.about.path }}">About</a>
+        <a href="{{ layout.urls.main.path }}">Main</a>
+      </nav>
+    </header>
+    <section class="navigation-frame">
+      <nav aria-label="Breadcrumb">
+        <ol>
+          {% for step in layout.navigation.trail %}
+          <li>
+            {% if step.current %}
+            <span aria-current="page">{{ step.label }}</span>
+            {% else %}
+            <a href="{{ step.href }}">{{ step.label }}</a>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ol>
+      </nav>
+      {% if layout.navigation.back.ok %}
+      <a class="back-link" href="{{ layout.navigation.back.href }}">Back to {{ layout.navigation.back.label }}</a>
+      {% endif %}
+    </section>
+    <main class="page-shell">{{ child }}</main>
+  </body>
+</html>

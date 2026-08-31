@@ -186,3 +186,11 @@ and alternate trail behavior without a second route graph.
 Navigation values are ordinary application context. Fragments and actions do
 not receive implicit template values or layouts; handlers pass Navigation in
 their explicit `FragmentResponse.context` or `Page.context` when needed.
+
+## Runnable example
+
+The [Navigation example](../../examples/navigation) provides HQ and Regional
+journeys through dynamic office, team, and customer labels. Its README walks
+through analytics destinations with filtered Back URLs, customer-owned mounted
+reports, and a shared report that selects one of two explicit alternate trails.
+The example also tests the same links below a FastAPI `/directory` mount.

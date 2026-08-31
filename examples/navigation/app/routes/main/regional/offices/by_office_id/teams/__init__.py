@@ -1,0 +1,1 @@
+"""Regional teams route namespace."""

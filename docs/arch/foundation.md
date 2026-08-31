@@ -25,11 +25,12 @@ contracts.
   awaitable returned by a sync callable only after the sync call has completed
   in the worker thread.
 - Reject async generator functions as route callables.
-- Async actions may use async request APIs directly. Explicitly opted-in sync
-  mutation actions receive immutable `Body` or `Form` values from
+- Async actions may use async request APIs directly. Explicitly opted-in sync or
+  async mutation actions receive immutable `Body` or `Form` values from
   `pyganini.request_data`; capture, upload materialization, and shielded cleanup
-  finish on the ASGI side before AnyIO worker offload. The original Starlette
-  `Request` remains available for safe synchronous properties. No implicit
+  finish on the ASGI side before handler invocation. The original Starlette
+  `Request` remains available; sync handlers use only safe synchronous
+  properties. No implicit
   portal, cached-request proxy, second event loop, or total-body policy exists.
 - Async form-reading actions use Starlette's public `Request.form()` async
   context manager. Pyganini directly declares the compatible
@@ -164,10 +165,10 @@ contracts.
   not supported by this evidence. The probe does not define streaming handlers,
   background tasks, thread-pool sizing, or timeout policy.
 
-### Sync-action request data
+### Captured action request data
 
-- Question: How can sync actions consume bodies and forms without another event
-  loop or hidden portal?
+- Question: How can actions consume bounded immutable bodies and forms without
+  another event loop or hidden portal?
 - Candidates tested: immutable pre-read data, a cached Starlette request passed
   to sync code, restricting direct async request APIs to async callables, and
   parsed-form cleanup after successful and failed upload materialization;
@@ -188,16 +189,16 @@ contracts.
   cleanup-only failures were grouped after every close attempt. Passing a cached
   request would still expose async form APIs to sync code and therefore did not
   provide an honest sync contract.
-- Selected rule or named deferral: async actions may use request APIs directly;
-  sync actions receive only explicitly pre-read immutable request data for the
-  body/form fields a later public contract accepts. Dispatch attempts each
+- Selected rule or named deferral: direct async request parsing remains
+  available; captured sync and async actions receive only explicitly pre-read
+  immutable request data. Dispatch attempts each
   distinct parsed upload close under cancellation shielding after those values
   have been materialized or materialization fails. A primary failure remains
   primary with cleanup notes; cleanup-only failures use an exception group.
 - Consequence for later child specs: the HTMX async-workflow child owns visible
   HTMX behavior, header helpers, and Starlette-owned async form use. The Sync
   Action Request Data successor owns the immutable public request-data shape,
-  form limits for sync offload, pre-reading, materialization, and cleanup.
+  form limits, pre-reading, materialization, and cleanup.
 - Limitation: a resource whose own `close()` raises cannot be claimed closed.
   Upload size, spooling, streaming, validation, and application policy remain
   application-owned or require later accepted contracts.
@@ -338,7 +339,7 @@ contracts.
   parameters, quoting, mounts, and base paths using the annotated `.py` rule.
 - HTMX references and route-local workflows: visible HTMX attributes, header
   helpers, Starlette-owned async forms, and route-local response behavior.
-- Sync Action Request Data: immutable sync-action request data, ASGI-thread
-  pre-reading, form limits, upload materialization, cancellation, and cleanup.
+- Captured Action Request Data: immutable request data, ASGI-thread pre-reading,
+  form limits, upload materialization, cancellation, and cleanup.
 
 The foundation probes leave no unassigned technical decision in their scope.

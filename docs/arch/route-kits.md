@@ -80,6 +80,8 @@ must accept one request argument. Selected kit handlers must accept
 handlers must accept `(kit, request, body)` or `(kit, request, form)`. Async
 generators, unsupported callable descriptors, partials with the wrong remaining
 signature, and other signature failures remain `PYGANINI013`.
+Captured kit handlers may be sync or async under the same callable model as
+other handlers.
 The creator is captured from the validated `KitRouteDef`; no application code
 is invoked during generated-module import.
 
@@ -124,7 +126,7 @@ The source-only [route inspection](../user/route-inspection.md) command
 reports selected kit endpoints and effective mounted layouts from the same
 graph; it does not inspect runtime kit values or import shared modules.
 Navigation, dependency injection, middleware, authentication, and
-synchronization remain outside this route-kit contract. Explicit sync
+synchronization remain outside this route-kit contract. Explicit captured
 request-data materialization is an action-owned extension of the shared
 handler contract; it preserves creator ordering, mounted-source capture facts,
 and the same canonical graph.

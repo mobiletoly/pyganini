@@ -400,7 +400,7 @@ def test_generated_route_kit_sync_form_action_runs_creator_before_capture(
     assert response.text == "Ada,Grace"
 
 
-def test_generated_request_data_action_rejects_async_handler_before_serving(
+def test_generated_request_data_action_runs_async_handler_on_asgi_loop(
     tmp_path: Path, make_app: Callable[..., Path]
 ) -> None:
     application = make_app(tmp_path / "application")
@@ -408,10 +408,15 @@ def test_generated_request_data_action_rejects_async_handler_before_serving(
     route.mkdir()
     (route / "__init__.py").write_text("", encoding="ascii")
     (route / "route.py").write_text(
+        "import asyncio\n"
         "from pyganini import action, route\n"
         "from pyganini.request_data import capture_body\n"
         "from starlette.responses import PlainTextResponse\n"
-        "async def save(request, data): return PlainTextResponse('no')\n"
+        "events = []\n"
+        "async def save(request, data):\n"
+        "    events.append(asyncio.get_running_loop())\n"
+        "    await asyncio.sleep(0)\n"
+        "    return PlainTextResponse(data.content)\n"
         "Route = route(actions=(action(\n"
         "    'POST', '/save', save, request_data=capture_body(max_bytes=4)\n"
         "),))\n",
@@ -419,16 +424,14 @@ def test_generated_request_data_action_rejects_async_handler_before_serving(
     )
     assert main(["generate", "--app-root", str(application)]) == 0
 
-    with pytest.raises(DispatchError) as captured, _generated_module(application):
-        pass
+    with _generated_module(application) as generated:
+        with TestClient(generated.router) as client:
+            response = client.post("/users/save", content=b"okay")
+        events = sys.modules["app.routes.users.route"].__dict__["events"]
 
-    assert captured.value.code == "PYGANINI013"
-    assert captured.value.phase == "route-callable"
-    assert any("sync request-data action" in item for item in captured.value.details)
-    assert "request-data mode: body" in captured.value.details
-    assert "expected arity: 2" in captured.value.details
-    assert "callable mode: async" in captured.value.details
-    assert "selected mode: async" not in captured.value.details
+    assert response.status_code == 200
+    assert response.content == b"okay"
+    assert len(events) == 1
 
 
 def test_generated_request_data_action_wrong_arity_details_include_capture_mode(
@@ -456,41 +459,18 @@ def test_generated_request_data_action_wrong_arity_details_include_capture_mode(
 
     assert captured.value.code == "PYGANINI013"
     assert captured.value.phase == "route-callable"
-    assert "sync request-data action" in captured.value.message
+    assert captured.value.message == (
+        "captured route action must accept (request, payload) and require no "
+        "other argument"
+    )
+    assert "callable role: captured route action" in captured.value.details
     assert "request-data mode: form" in captured.value.details
     assert "expected arity: 2" in captured.value.details
     assert "callable mode: async" not in captured.value.details
 
 
-@pytest.mark.parametrize(
-    ("handler_source", "capture_constructor", "capture_source", "mode", "async_mode"),
-    [
-        (
-            "def save(kit, request, data, extra):\n    return PlainTextResponse('no')",
-            "capture_body",
-            "capture_body(max_bytes=4)",
-            "body",
-            False,
-        ),
-        (
-            "async def save(kit, request, data):\n    return PlainTextResponse('no')",
-            "capture_form",
-            "capture_form(\n"
-            "    max_files=1, max_fields=4, max_part_size=64, max_upload_size=128)",
-            "form",
-            True,
-        ),
-    ],
-    ids=["wrong-arity", "async-handler"],
-)
-def test_generated_route_kit_request_data_diagnostics_include_mode_and_arity(
-    tmp_path: Path,
-    make_app: Callable[..., Path],
-    handler_source: str,
-    capture_constructor: str,
-    capture_source: str,
-    mode: str,
-    async_mode: bool,
+def test_generated_route_kit_request_data_wrong_arity_has_kit_diagnostic(
+    tmp_path: Path, make_app: Callable[..., Path]
 ) -> None:
     application = make_app(tmp_path / "application")
     route = application / "app" / "routes" / "users"
@@ -498,15 +478,15 @@ def test_generated_route_kit_request_data_diagnostics_include_mode_and_arity(
     (route / "__init__.py").write_text("", encoding="ascii")
     (route / "route.py").write_text(
         "from pyganini import kit_action, route_kit\n"
-        f"from pyganini.request_data import {capture_constructor}\n"
+        "from pyganini.request_data import capture_body\n"
         "from starlette.responses import PlainTextResponse\n"
         "def create(request): return 'kit'\n"
-        f"{handler_source}\n"
+        "def save(kit, request, data, extra): return PlainTextResponse('no')\n"
         "Route = route_kit(\n"
         "    create=create,\n"
         "    actions=(kit_action(\n"
         "        'POST', '/save', save,\n"
-        f"        request_data={capture_source}),\n"
+        "        request_data=capture_body(max_bytes=4)),\n"
         "    ),\n"
         ")\n",
         encoding="ascii",
@@ -518,11 +498,59 @@ def test_generated_route_kit_request_data_diagnostics_include_mode_and_arity(
 
     assert captured.value.code == "PYGANINI013"
     assert captured.value.phase == "route-callable"
-    assert "sync request-data action" in captured.value.message
-    assert f"request-data mode: {mode}" in captured.value.details
+    assert captured.value.message == (
+        "captured kit action must accept (kit, request, payload) and require no "
+        "other argument"
+    )
+    assert "callable role: captured kit action" in captured.value.details
+    assert "request-data mode: body" in captured.value.details
     assert "expected arity: 3" in captured.value.details
-    assert ("callable mode: async" in captured.value.details) is async_mode
-    assert "selected mode: async" not in captured.value.details
+
+
+def test_generated_route_kit_async_form_action_runs_creator_before_capture(
+    tmp_path: Path, make_app: Callable[..., Path]
+) -> None:
+    application = make_app(tmp_path / "application")
+    route = application / "app" / "routes" / "users"
+    route.mkdir()
+    (route / "__init__.py").write_text("", encoding="ascii")
+    (route / "route.py").write_text(
+        "import asyncio\n"
+        "from pyganini import kit_action, route_kit\n"
+        "from pyganini.request_data import Form, capture_form\n"
+        "from starlette.responses import PlainTextResponse\n"
+        "events = []\n"
+        "async def create(request): events.append('create'); return 'kit'\n"
+        "async def save(kit, request, form: Form):\n"
+        "    await asyncio.sleep(0)\n"
+        "    events.append(('save', kit, form.values('name')))\n"
+        "    return PlainTextResponse(','.join(form.values('name')))\n"
+        "Route = route_kit(\n"
+        "    create=create,\n"
+        "    actions=(kit_action(\n"
+        "        'POST', '/save', save,\n"
+        "        request_data=capture_form(\n"
+        "            max_files=1, max_fields=4, max_part_size=64,\n"
+        "            max_upload_size=128),\n"
+        "    ),),\n"
+        ")\n",
+        encoding="ascii",
+    )
+    assert main(["generate", "--app-root", str(application)]) == 0
+
+    with _generated_module(application) as generated:
+        with TestClient(generated.router) as client:
+            response = client.post(
+                "/users/save",
+                content="name=Ada&name=Grace",
+                headers={"content-type": "application/x-www-form-urlencoded"},
+            )
+        assert sys.modules["app.routes.users.route"].__dict__["events"] == [
+            "create",
+            ("save", "kit", ("Ada", "Grace")),
+        ]
+
+    assert response.text == "Ada,Grace"
 
 
 def test_mounted_dispatch_generates_owner_source_generic_witness(

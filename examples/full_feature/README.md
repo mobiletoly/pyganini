@@ -259,8 +259,9 @@ other 4xx and 5xx response swaps.
 The action opts into `capture_form(max_files=4, max_fields=16,
 max_part_size=65_536, max_upload_size=65_536)`. Pyganini uses Starlette's public
 multipart parser on the ASGI side, copies each upload into an immutable
-`Upload`, closes parsed uploads, and only then runs the synchronous handler in
-the worker thread. These values do not impose a total request-body limit;
+`Upload`, closes parsed uploads, and only then runs this example's synchronous
+handler in the worker thread. Captured handlers may also be async. These values
+do not impose a total request-body limit;
 Starlette may parse or spool input before the per-upload check. This is an
 example policy, not a production upload security boundary.
 
@@ -303,18 +304,13 @@ an application-owned custom trail and clicks Home inside the canonical
 breadcrumb, proving that canonical navigation cannot escape to host `/`. The
 documented `app.main:app` launch command remains root-mounted.
 
-## Local HTMX attribution
+## Local HTMX assets
 
 The application vendors `htmx.org` `4.0.0-beta6` core and `hx-sse` extension
-from their versioned asset URLs under `assets/build/vendor`; Pyganini projects
-both to fingerprinted `assets/dist` paths. The core SHA-256 is
-`28fae7bbe8e8142b702debb9d5234a9a436d9435a4b5165b195aa1a7ed840d25`, and its
-extension SHA-256 is
-`d3aeb71073552b253eaee99badebd60607003b1c25ac567ab88187d6887ab522`. The
-package metadata declares `BSD-0-Clause`. The complete Zero-Clause BSD notice,
-package metadata URL, versioned license URL, asset URL, version, identifier,
-hash, and SRI are recorded in `THIRD_PARTY_NOTICES.md`. The application makes
-no browser-time request to a CDN and does not describe HTMX as MIT-licensed.
+from their
+[versioned distribution](https://cdn.jsdelivr.net/npm/htmx.org@4.0.0-beta6/dist/)
+under `assets/build/vendor`; Pyganini projects both to fingerprinted
+`assets/dist` paths. The application makes no browser-time request to a CDN.
 
 ## Current limits
 

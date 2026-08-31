@@ -1,0 +1,52 @@
+[project]
+name = "pyganini-kit-routes-example"
+version = "0.0.0"
+description = "Focused mounted route subtree example for Pyganini"
+requires-python = ">=3.13"
+dependencies = [
+    "pyganini",
+    "starlette>=1.6.0,<1.7",
+    "uvicorn>=0.52.4,<0.53",
+]
+
+[tool.uv.sources]
+pyganini = { path = "../..", editable = true }
+
+[dependency-groups]
+test = [
+    "httpx2==2.12.0",
+    "pytest==9.1.1",
+]
+lint = ["ruff==0.16.3"]
+typing = [
+    "mypy==2.3.1",
+    "pyright==1.1.411",
+]
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    { include-group = "typing" },
+]
+
+[tool.pyganini]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+extend-exclude = ["app/_pyganini"]
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error"]
+

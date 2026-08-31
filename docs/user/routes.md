@@ -178,16 +178,17 @@ named handler because Python binds the function name before `Route`.
 An ordinary route handler accepts one positional Starlette `Request` and
 returns a supported Pyganini render value or concrete Starlette `Response`. An
 action may opt into `request_data=` from `pyganini.request_data`; it then receives
-`(request, body)` or `(request, form)` and must be synchronous. A route-kit
+`(request, body)` or `(request, form)` as a sync or async callable. A route-kit
 creator accepts one `Request`; its selected shared handler accepts
 `(kit, request)` for non-captured surfaces, or `(kit, request, body)` or
 `(kit, request, form)` for an opted-in action. Plain sync and async functions,
 bound Python methods, `functools.partial`, decorated
 outer functions, and callable instances with a plain Python `__call__` are
 supported. Pyganini invokes async handlers on the ASGI event loop and ordinary
-sync handlers in an AnyIO worker thread. Request-data capture completes before
-the worker starts. A sync handler cannot call Starlette async request methods;
-use an async action for streaming or live form/upload access.
+sync handlers in an AnyIO worker thread. Request-data capture and upload cleanup
+complete before either callable mode runs. A sync handler cannot call Starlette
+async request methods. Use direct async request parsing for streaming or live
+form/upload access.
 
 Importing `app._pyganini.asgi` imports each recorded route and handler module,
 compares the runtime `Route` surface with generated evidence, validates binding

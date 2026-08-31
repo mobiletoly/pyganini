@@ -34,8 +34,19 @@ type _KitFragmentHandler[K] = Callable[
 type _KitActionHandler[K] = Callable[
     [K, Request], RouteResponse | Awaitable[RouteResponse]
 ]
-type _KitBodyActionHandler[K] = Callable[[K, Request, Body], RouteResponse]
-type _KitFormActionHandler[K] = Callable[[K, Request, Form], RouteResponse]
+type _ActionHandler = Callable[[Request], RouteResponse | Awaitable[RouteResponse]]
+type _BodyActionHandler = Callable[
+    [Request, Body], RouteResponse | Awaitable[RouteResponse]
+]
+type _FormActionHandler = Callable[
+    [Request, Form], RouteResponse | Awaitable[RouteResponse]
+]
+type _KitBodyActionHandler[K] = Callable[
+    [K, Request, Body], RouteResponse | Awaitable[RouteResponse]
+]
+type _KitFormActionHandler[K] = Callable[
+    [K, Request, Form], RouteResponse | Awaitable[RouteResponse]
+]
 
 
 def _empty_route_labels() -> Mapping[str, str]:
@@ -78,15 +89,82 @@ class FragmentRouteDef:
         object.__setattr__(self, "template", _normalize_template(self.template))
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, init=False)
 class ActionDef:
     """A route-local action declaration."""
 
     method: Literal["POST", "PUT", "PATCH", "DELETE"]
     path: str
-    handler: Callable[..., object]
+    handler: _ActionHandler | _BodyActionHandler | _FormActionHandler
     template: str | None = None
     request_data: BodyCapture | FormCapture | None = None
+
+    @overload
+    def __init__(
+        self,
+        method: Literal["POST", "PUT", "PATCH", "DELETE"],
+        path: str,
+        handler: _ActionHandler,
+        template: str | None = None,
+        request_data: None = None,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self,
+        method: Literal["POST", "PUT", "PATCH", "DELETE"],
+        path: str,
+        handler: _BodyActionHandler,
+        *,
+        template: str | None = None,
+        request_data: BodyCapture,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self,
+        method: Literal["POST", "PUT", "PATCH", "DELETE"],
+        path: str,
+        handler: _BodyActionHandler,
+        template: str | None,
+        request_data: BodyCapture,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self,
+        method: Literal["POST", "PUT", "PATCH", "DELETE"],
+        path: str,
+        handler: _FormActionHandler,
+        *,
+        template: str | None = None,
+        request_data: FormCapture,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self,
+        method: Literal["POST", "PUT", "PATCH", "DELETE"],
+        path: str,
+        handler: _FormActionHandler,
+        template: str | None,
+        request_data: FormCapture,
+    ) -> None: ...
+
+    def __init__(
+        self,
+        method: Literal["POST", "PUT", "PATCH", "DELETE"],
+        path: str,
+        handler: _ActionHandler | _BodyActionHandler | _FormActionHandler,
+        template: str | None = None,
+        request_data: BodyCapture | FormCapture | None = None,
+    ) -> None:
+        object.__setattr__(self, "method", method)
+        object.__setattr__(self, "path", path)
+        object.__setattr__(self, "handler", handler)
+        object.__setattr__(self, "template", template)
+        object.__setattr__(self, "request_data", request_data)
+        self.__post_init__()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "method", _normalize_action_method(self.method))
@@ -639,21 +717,74 @@ def fragment_route(
     )
 
 
+@overload
 def action(
     method: Literal["POST", "PUT", "PATCH", "DELETE"],
     path: str,
-    handler: Callable[..., object],
+    handler: _ActionHandler,
+    *,
+    template: str | None = None,
+    request_data: None = None,
+) -> ActionDef: ...
+
+
+@overload
+def action(
+    method: Literal["POST", "PUT", "PATCH", "DELETE"],
+    path: str,
+    handler: _BodyActionHandler,
+    *,
+    template: str | None = None,
+    request_data: BodyCapture,
+) -> ActionDef: ...
+
+
+@overload
+def action(
+    method: Literal["POST", "PUT", "PATCH", "DELETE"],
+    path: str,
+    handler: _FormActionHandler,
+    *,
+    template: str | None = None,
+    request_data: FormCapture,
+) -> ActionDef: ...
+
+
+def action(
+    method: Literal["POST", "PUT", "PATCH", "DELETE"],
+    path: str,
+    handler: _ActionHandler | _BodyActionHandler | _FormActionHandler,
     *,
     template: str | None = None,
     request_data: BodyCapture | FormCapture | None = None,
 ) -> ActionDef:
     """Declare an action at one normalized route-local path."""
+    normalized_method = _normalize_action_method(method)
+    normalized_path = _normalize_local_path(path)
+    normalized_template = _normalize_template(template)
+    normalized_request_data = _normalize_request_data(request_data)
+    if normalized_request_data is None:
+        return ActionDef(
+            method=normalized_method,
+            path=normalized_path,
+            handler=cast(_ActionHandler, handler),
+            template=normalized_template,
+            request_data=None,
+        )
+    if isinstance(normalized_request_data, BodyCapture):
+        return ActionDef(
+            method=normalized_method,
+            path=normalized_path,
+            handler=cast(_BodyActionHandler, handler),
+            template=normalized_template,
+            request_data=normalized_request_data,
+        )
     return ActionDef(
-        method=_normalize_action_method(method),
-        path=_normalize_local_path(path),
-        handler=handler,
-        template=_normalize_template(template),
-        request_data=_normalize_request_data(request_data),
+        method=normalized_method,
+        path=normalized_path,
+        handler=cast(_FormActionHandler, handler),
+        template=normalized_template,
+        request_data=normalized_request_data,
     )
 
 

@@ -1,0 +1,19 @@
+<form
+  id="composer"
+  method="post"
+  action="{{ message_url }}"
+  hx-post="{{ message_url }}"
+  hx-target="#composer"
+  hx-swap="outerHTML"
+  hx-indicator="#send-progress"
+  hx-status:422='{"swap":true}'>
+  <div class="field">
+    <label for="body">Message</label>
+    <textarea id="body" name="body">{{ form.body }}</textarea>
+  </div>
+  {% if form.body_error %}<p class="error">{{ form.body_error }}</p>{% endif %}
+  <div class="composer-actions">
+    <button type="submit">Send</button>
+    <span id="send-progress" class="send-progress" role="status" aria-live="polite">Sending (3 second example delay)...</span>
+  </div>
+</form>

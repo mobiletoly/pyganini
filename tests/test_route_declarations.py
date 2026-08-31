@@ -405,7 +405,7 @@ def test_route_kit_generic_relationship_passes_and_rejects_cross_kit_handlers(
 
 
 @pytest.mark.parametrize("checker", ["mypy", "pyright"])
-def test_kit_action_request_data_overloads_correlate_payload_and_sync_mode(
+def test_kit_action_request_data_overloads_accept_sync_and_async_handlers(
     tmp_path: Path, checker: str
 ) -> None:
     application = tmp_path / "typing"
@@ -423,35 +423,29 @@ def test_kit_action_request_data_overloads_correlate_payload_and_sync_mode(
         "    return Response(data.content)\n"
         "def form(kit: ReportsKit, request: Request, data: Form) -> Response:\n"
         "    return Response(','.join(data.values('name')))\n"
+        "async def async_body(\n"
+        "    kit: ReportsKit, request: Request, data: Body\n"
+        ") -> Response:\n"
+        "    return Response(data.content)\n"
+        "async def async_form(\n"
+        "    kit: ReportsKit, request: Request, data: Form\n"
+        ") -> Response:\n"
+        "    return Response(','.join(data.values('name')))\n"
         "Route = route_kit(actions=(\n"
         "    kit_action('POST', '/plain', plain),\n"
         "    kit_action('POST', '/body', body, "
         "request_data=capture_body(max_bytes=8)),\n"
         "    kit_action('POST', '/form', form, request_data=capture_form(\n"
         "        max_files=1, max_fields=4, max_part_size=64, max_upload_size=128)),\n"
+        "    kit_action('POST', '/async-body', async_body, "
+        "request_data=capture_body(max_bytes=8)),\n"
+        "    kit_action('POST', '/async-form', async_form, request_data=capture_form(\n"
+        "        max_files=1, max_fields=4, max_part_size=64, max_upload_size=128)),\n"
         "))\n",
         encoding="ascii",
     )
     valid_result = _run_kit_checker(checker, application, valid)
     assert valid_result.returncode == 0, valid_result.stdout + valid_result.stderr
-
-    invalid = application / "sample.py"
-    invalid.write_text(
-        "from pyganini import route_kit, kit_action\n"
-        "from pyganini.request_data import Form, capture_form\n"
-        "from starlette.requests import Request\n"
-        "from starlette.responses import Response\n"
-        "class ReportsKit: pass\n"
-        "async def save(kit: ReportsKit, request: Request, data: Form) -> Response:\n"
-        "    return Response()\n"
-        "Route = route_kit(actions=(kit_action(\n"
-        "    'POST', '/save', save, request_data=capture_form(\n"
-        "        max_files=1, max_fields=4, max_part_size=64, max_upload_size=128)),\n"
-        "))\n",
-        encoding="ascii",
-    )
-    invalid_result = _run_kit_checker(checker, application, invalid)
-    assert invalid_result.returncode != 0
 
 
 @pytest.mark.parametrize("checker", ["mypy", "pyright"])
@@ -475,6 +469,14 @@ def test_direct_kit_action_definition_handler_typing_is_correlated(
         "    return Response(data.content)\n"
         "def form(kit: ReportsKit, request: Request, data: Form) -> Response:\n"
         "    return Response(','.join(data.values('name')))\n"
+        "async def async_body(\n"
+        "    kit: ReportsKit, request: Request, data: Body\n"
+        ") -> Response:\n"
+        "    return Response(data.content)\n"
+        "async def async_form(\n"
+        "    kit: ReportsKit, request: Request, data: Form\n"
+        ") -> Response:\n"
+        "    return Response(','.join(data.values('name')))\n"
         "plain_def: KitActionDef[ReportsKit] = KitActionDef(\n"
         "    'POST', '/plain', plain)\n"
         "async_plain_def: KitActionDef[ReportsKit] = KitActionDef(\n"
@@ -483,6 +485,12 @@ def test_direct_kit_action_definition_handler_typing_is_correlated(
         "    'POST', '/body', body, request_data=BodyCapture(max_bytes=8))\n"
         "form_def: KitActionDef[ReportsKit] = KitActionDef(\n"
         "    'POST', '/form', form, request_data=FormCapture(\n"
+        "        max_files=1, max_fields=4, max_part_size=64, max_upload_size=128))\n"
+        "async_body_def: KitActionDef[ReportsKit] = KitActionDef(\n"
+        "    'POST', '/async-body', async_body,\n"
+        "    request_data=BodyCapture(max_bytes=8))\n"
+        "async_form_def: KitActionDef[ReportsKit] = KitActionDef(\n"
+        "    'POST', '/async-form', async_form, request_data=FormCapture(\n"
         "        max_files=1, max_fields=4, max_part_size=64, max_upload_size=128))\n",
         encoding="ascii",
     )
@@ -535,9 +543,6 @@ def test_direct_kit_action_definition_rejects_uncorrelated_capture(
     [
         "KitActionDef[ReportsKit](\n    'POST', '/wrong-kit', wrong_kit)",
         "KitActionDef[ReportsKit](\n    'POST', '/wrong-arity', wrong_arity)",
-        "KitActionDef[ReportsKit](\n"
-        "    'POST', '/async-body', async_body,\n"
-        "    request_data=BodyCapture(max_bytes=8))",
     ],
 )
 def test_direct_kit_action_definition_rejects_invalid_handler_independently(
@@ -559,11 +564,68 @@ def test_direct_kit_action_definition_rejects_invalid_handler_independently(
         "    kit: ReportsKit, request: Request, data: Body, extra: str\n"
         ") -> Response:\n"
         "    return Response()\n"
-        "async def async_body(\n"
-        "    kit: ReportsKit, request: Request, data: Body\n"
-        ") -> Response:\n"
-        "    return Response()\n"
         f"invalid: KitActionDef[ReportsKit] = {declaration}\n",
+        encoding="ascii",
+    )
+
+    result = _run_kit_checker(checker, application, sample)
+    assert result.returncode != 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("checker", ["mypy", "pyright"])
+def test_action_request_data_typing_correlates_capture_and_callable_mode(
+    tmp_path: Path, checker: str
+) -> None:
+    application = tmp_path / "typing"
+    application.mkdir()
+    sample = application / "sample.py"
+    sample.write_text(
+        "from pyganini import ActionDef, action\n"
+        "from pyganini.request_data import Body, BodyCapture, Form, capture_form\n"
+        "from starlette.requests import Request\n"
+        "from starlette.responses import Response\n"
+        "def plain(request: Request) -> Response: return Response()\n"
+        "async def body(request: Request, data: Body) -> Response:\n"
+        "    return Response(data.content)\n"
+        "async def form(request: Request, data: Form) -> Response:\n"
+        "    return Response(','.join(data.values('name')))\n"
+        "plain_def = action('POST', '/plain', plain)\n"
+        "body_def: ActionDef = ActionDef(\n"
+        "    'POST', '/body', body, request_data=BodyCapture(max_bytes=8))\n"
+        "form_def = action('POST', '/form', form, request_data=capture_form(\n"
+        "    max_files=1, max_fields=4, max_part_size=64, max_upload_size=128))\n",
+        encoding="ascii",
+    )
+
+    result = _run_kit_checker(checker, application, sample)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("checker", ["mypy", "pyright"])
+@pytest.mark.parametrize(
+    "declaration",
+    [
+        "ActionDef('POST', '/wrong-body', form, request_data=BodyCapture(max_bytes=8))",
+        "action('POST', '/body-without-capture', body)",
+        "action('POST', '/missing-payload', plain, "
+        "request_data=BodyCapture(max_bytes=8))",
+    ],
+)
+def test_action_request_data_typing_rejects_uncorrelated_handlers(
+    tmp_path: Path, checker: str, declaration: str
+) -> None:
+    application = tmp_path / "typing"
+    application.mkdir()
+    sample = application / "sample.py"
+    sample.write_text(
+        "from pyganini import ActionDef, action\n"
+        "from pyganini.request_data import Body, BodyCapture, Form\n"
+        "from starlette.requests import Request\n"
+        "from starlette.responses import Response\n"
+        "def plain(request: Request) -> Response: return Response()\n"
+        "def body(request: Request, data: Body) -> Response: return Response()\n"
+        "def form(request: Request, data: Form) -> Response: return Response()\n"
+        f"invalid = {declaration}\n",
         encoding="ascii",
     )
 

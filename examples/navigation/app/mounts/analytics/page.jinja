@@ -1,0 +1,26 @@
+<section class="card" data-page="analytics" data-owner="{{ analytics.heading }}">
+  <p class="eyebrow">Mounted analytics source</p>
+  <h1>{{ analytics.heading }}</h1>
+  <p>Team: {{ analytics.team.name }}</p>
+  <form action="{{ analytics.urls.page_url }}" method="get">
+    <label for="risk">Risk</label>
+    <select id="risk" name="risk">
+      <option value=""{% if analytics.selected_risk == "" %} selected{% endif %}>All risks</option>
+      <option value="high"{% if analytics.selected_risk == "high" %} selected{% endif %}>High</option>
+      <option value="medium"{% if analytics.selected_risk == "medium" %} selected{% endif %}>Medium</option>
+    </select>
+    <label for="page">Page</label>
+    <input id="page" name="page" value="{{ analytics.selected_page }}">
+    <button type="submit">Apply</button>
+  </form>
+  <ul>
+    {% for customer in analytics.customers %}
+    <li>
+      <a href="{{ analytics.customer_report_href(analytics.navigation, customer.identifier) }}">{{ customer.name }} report</a>
+      <a href="{{ analytics.customer_url(customer.identifier) }}">Canonical customer</a>
+    </li>
+    {% else %}
+    <li>No customers match this risk.</li>
+    {% endfor %}
+  </ul>
+</section>

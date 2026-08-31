@@ -145,10 +145,11 @@ HTMX branch, target, swap, redirect, cache policy, or client response policy.
 
 Direct Starlette form access is asynchronous and uses Starlette's public
 `async with request.form(...)` context manager. Finish upload reads before the
-context exits. A synchronous mutation action can instead use
-`request_data=capture_form(...)`; Pyganini materializes an immutable `Form` before
-invoking that handler. See [HTMX and async forms](htmx.md) for explicit limits,
-validation redisplay, and upload lifetime.
+context exits. A sync or async mutation action can instead use
+`request_data=capture_form(...)`; Pyganini materializes and cleans up an
+immutable `Form` before invoking that handler. See
+[HTMX and async forms](htmx.md) for explicit limits, validation redisplay, and
+upload lifetime.
 
 ## Render values and direct responses
 

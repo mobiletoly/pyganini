@@ -275,6 +275,12 @@ in an AnyIO worker thread.
 
 - [Full-feature contact directory](examples/full_feature) combines the public
   route, rendering, navigation, HTMX, asset, SSE, browser, and error surfaces.
+- [Chat](examples/chat) connects generated form actions to an application-owned
+  SSE room with replay, heartbeats, named HTML events, and subscriber cleanup.
+- [Kit route mounts](examples/kit_routes) mounts one reusable reports subtree
+  below admin and user owners with different data and selected children.
+- [Navigation](examples/navigation) follows HQ and Regional route trees through
+  dynamic breadcrumbs, mounted reports, destinations, and semantic Back links.
 - [React island](examples/react_island) mounts one application-owned React
   editor inside a server-rendered page.
 - [Svelte island](examples/svelte_island) mounts the same bounded interaction

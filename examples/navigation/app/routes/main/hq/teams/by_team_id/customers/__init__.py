@@ -1,0 +1,1 @@
+"""HQ customers route namespace."""

@@ -79,3 +79,76 @@ jobs:
 
       - name: Run the test suite
         run: uv run --locked --python 3.13 pytest
+
+  server-examples:
+    name: ${{ matrix.example }} example on Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example: ["chat", "kit_routes", "navigation"]
+        python-version: ["3.13", "3.14"]
+    defaults:
+      run:
+        working-directory: examples/${{ matrix.example }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.3"
+          enable-cache: true
+
+      - name: Install Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install example dependencies
+        run: >-
+          uv sync --locked --all-groups
+          --python ${{ matrix.python-version }}
+
+      - name: Check formatting
+        run: >-
+          uv run --locked --python ${{ matrix.python-version }}
+          ruff format --check .
+
+      - name: Lint
+        run: >-
+          uv run --locked --python ${{ matrix.python-version }}
+          ruff check .
+
+      - name: Check typing with mypy
+        run: >-
+          uv run --locked --python ${{ matrix.python-version }}
+          mypy app tests
+
+      - name: Check typing with Pyright
+        run: >-
+          uv run --locked --python ${{ matrix.python-version }}
+          pyright app tests
+
+      - name: Run example tests
+        run: >-
+          uv run --locked --python ${{ matrix.python-version }}
+          pytest
+
+      - name: Check generated state
+        run: |
+          uv run --locked --python ${{ matrix.python-version }} pyganini assets check
+          uv run --locked --python ${{ matrix.python-version }} pyganini check
+
+      - name: Regenerate deterministically
+        run: |
+          uv run --locked --python ${{ matrix.python-version }} pyganini assets dist
+          uv run --locked --python ${{ matrix.python-version }} pyganini generate
+
+      - name: Require a clean example tree
+        run: |
+          if [[ -n "$(git status --porcelain=v1 --untracked-files=all -- .)" ]]; then
+            git status --short --untracked-files=all -- .
+            exit 1
+          fi

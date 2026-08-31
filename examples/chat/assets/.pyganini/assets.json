@@ -1,0 +1,20 @@
+{
+  "schema": "pyganini.assets-state.v1",
+  "managed": [
+    {
+      "logical": "app.css",
+      "dist": "assets/dist/app.2ca0c582.css",
+      "hash": "2ca0c582"
+    },
+    {
+      "logical": "vendor/htmx.min.js",
+      "dist": "assets/dist/vendor/htmx.min.28fae7bb.js",
+      "hash": "28fae7bb"
+    },
+    {
+      "logical": "vendor/hx-sse.min.js",
+      "dist": "assets/dist/vendor/hx-sse.min.d3aeb710.js",
+      "hash": "d3aeb710"
+    }
+  ]
+}

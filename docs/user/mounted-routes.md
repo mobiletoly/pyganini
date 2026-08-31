@@ -170,8 +170,9 @@ layout.
 
 The source-only [route inspection](route-inspection.md) command reports
 selected endpoints and effective mounted-layout occurrences for every live
-owner, while omitting excluded declarations and ordinary outer layouts from an
-exact `--mount` filter. `routes explain` matches only endpoints selected into
+owner. An exact `--mount` filter also reports excluded source declarations as
+non-live diagnostic rows while omitting ordinary outer layouts. `routes
+explain` matches only endpoints selected into
 the final graph and reports the live owner position, mount identity, selected
 source declaration path, and outer-to-inner layout evidence. The same source
 mounted below two owners produces distinct explanations; an excluded source
@@ -181,3 +182,9 @@ selection overrides, while destination edges remain owner-owned and trails use
 the live owner path. Application-composition middleware, framework
 authentication, authorization, sessions, persistence, and dependency injection
 remain explicit application or successor-child boundaries.
+
+For a smaller demonstration, the [Kit routes example](../../examples/kit_routes)
+mounts `app/mounts/reports` below `/admin/reports` and `/user/reports`. Both
+owners select the source root page and table fragment. Only the admin owner
+selects `/audit`, so `mount_urls.reports.bind(urls.user.reports)` has no
+`audit` member and the unselected live path returns 404.

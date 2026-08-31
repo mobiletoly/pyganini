@@ -1,7 +1,7 @@
 # HTMX Form and Request-Data Architecture
 
 This document describes the direct Starlette async form boundary and the
-separate Pyganini synchronous request-data boundary. It does not add a route
+separate Pyganini captured request-data boundary. It does not add a route
 model, request wrapper, form abstraction, response builder, middleware,
 generated HTMX output, or runtime HTMX behavior.
 
@@ -16,7 +16,7 @@ generated HTMX output, or runtime HTMX behavior.
 - `src/pyganini/_dispatch.py` and generated `app/_pyganini/asgi.py` remain the owners
   of request delivery and callable invocation. They do not inspect HTMX headers
   or parse forms before a direct async handler runs; explicit `request_data=`
-  actions use the separate synchronous capture path below.
+  actions use the separate capture path below.
 - Starlette owns URL-encoded and multipart parsing through
   `Request.form(...)`. Pyganini directly declares the compatible
   `python-multipart>=0.0.32,<0.0.33` dependency.
@@ -56,10 +56,10 @@ and cleanup. Starlette's parser enforces the explicit file, field, and
 non-file-part limits. It does not enforce a total request-body limit or a file
 content limit through `max_part_size`.
 
-## Synchronous action request data
+## Captured action request data
 
-`pyganini.request_data` is a separate explicit boundary for mutation actions that
-must remain synchronous. `capture_body(max_bytes=...)` produces an immutable
+`pyganini.request_data` is a separate explicit boundary for sync or async
+mutation actions. `capture_body(max_bytes=...)` produces an immutable
 `Body`; `capture_form(...)` produces an ordered immutable `Form` whose uploads
 are immutable `Upload` values. Only `action()` and `kit_action()` accept the
 `request_data=` field, and the static graph accepts only direct unaliased
@@ -68,11 +68,14 @@ are immutable `Upload` values. Only `action()` and `kit_action()` accept the
 The normalized capture value and its source position travel through
 `ActionSurface`, `Endpoint`, and `iter_endpoints()`. Generated dispatch emits
 the value as method-specific literals. Controlled import compares the runtime
-declaration with that evidence and requires a synchronous action handler with
-arity `(request, data)` or `(kit, request, data)`. Pages, fragments, creators,
-async actions, and non-opted-in sync actions are unchanged.
+declaration with that evidence and requires a captured route action with arity
+`(request, data)` or a captured kit action with arity
+`(kit, request, data)`. Pages, fragments, creators, and non-opted-in actions are
+unchanged.
 
-Capture and upload cleanup happen on the ASGI side before worker offload. Body
+Capture and upload cleanup happen on the ASGI side before handler invocation.
+Async captured handlers then run on the ASGI event loop; sync captured handlers
+run through the host's AnyIO worker limiter. Body
 capture consumes `Request.stream()` cumulatively. Form capture validates the
 parsed media type, awaits `Request.form(...)` with explicit parser limits,
 copies every distinct `UploadFile` in bounded chunks, reuses duplicate object
@@ -83,7 +86,7 @@ cleanup notes and groups cleanup-only failures after every close attempt. This
 boundary has no portal, request proxy, middleware, schema, validation, CSRF,
 storage, or whole-request body policy.
 
-Malformed parser input remains a Starlette error. The synchronous boundary
+Malformed parser input remains a Starlette error. The captured boundary
 translates only missing or unsupported form media types to `HTTPException(415)`
 and body or upload byte-limit failures to `HTTPException(413)`; the host owns
 their final representation. It does not provide form validation, JSON binding,
@@ -108,10 +111,10 @@ The same visible HTMX contract applies when a route owner uses a shared route
 kit. The owner binds its generated URL surface into the kit value, and the
 shared page, fragment, or action template reads those explicit values. Pages,
 fragments, and non-captured actions receive `(kit, request)`; a captured action
-receives `(kit, request, body)` or `(kit, request, form)` synchronously. Direct
-Starlette `FormData` and live `UploadFile` access remains an async-handler
-workflow. Pyganini does not introduce a hidden dependency container or
-client-side state layer.
+receives `(kit, request, body)` or `(kit, request, form)` as a sync or async
+callable. Direct Starlette `FormData` and live `UploadFile` access remains a
+direct async request workflow. Pyganini does not introduce a hidden dependency
+container or client-side state layer.
 
 ## Static and host boundaries
 

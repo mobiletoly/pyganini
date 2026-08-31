@@ -52,6 +52,30 @@ def test_public_onboarding_links_resolve() -> None:
     assert missing == []
 
 
+def test_readme_indexes_every_runnable_example() -> None:
+    readme = (REPOSITORY / "README.md").read_text(encoding="utf-8")
+    example_directories = {
+        path.name
+        for path in (REPOSITORY / "examples").iterdir()
+        if path.is_dir() and not path.name.startswith(".")
+    }
+
+    assert example_directories == {
+        "chat",
+        "full_feature",
+        "kit_routes",
+        "navigation",
+        "react_island",
+        "svelte_island",
+    }
+    assert "[Chat](examples/chat)" in readme
+    assert "[Kit route mounts](examples/kit_routes)" in readme
+    assert "[Navigation](examples/navigation)" in readme
+    assert "[Full-feature contact directory](examples/full_feature)" in readme
+    assert "[React island](examples/react_island)" in readme
+    assert "[Svelte island](examples/svelte_island)" in readme
+
+
 def test_user_guide_indexes_match_and_cover_all_guides() -> None:
     root_entries = _guide_entries(REPOSITORY / "README.md")
     user_entries = _guide_entries(REPOSITORY / "docs" / "user" / "README.md")

@@ -53,12 +53,12 @@ second: `handler(kit, request)`. A captured action instead receives
 in one declaration share one generic `K`, so strict mypy and Pyright can reject
 a creator for one kit type paired with a handler for another.
 
-An action may opt into `request_data=` from `pyganini.request_data`. Its sync
-handler then receives `(kit, request, body)` or `(kit, request, form)` after
+An action may opt into `request_data=` from `pyganini.request_data`. Its sync or
+async handler receives `(kit, request, body)` or `(kit, request, form)` after
 the creator has completed and request data has been materialized. The same
 bounded parser, immutable upload, cleanup, media-type, and host-policy rules
-as ordinary actions apply. Async kit actions remain the direct Starlette form
-boundary and do not opt into this payload.
+as ordinary actions apply. Direct Starlette parsing remains the boundary for
+live `FormData`, `UploadFile`, streaming, and other async request APIs.
 
 An owner lists only the surfaces it exposes. Omitting a fragment or action
 omits its endpoint, dispatch entry, and generated URL helper for that owner.
@@ -108,8 +108,8 @@ HEAD request, then suppresses response body bytes. A sync creator and sync
 handler are not promised the same worker thread; thread-affine resources must
 stay inside one application-owned sync handler or use an application-owned
 async resource model. An opted-in request-data action runs capture and upload
-cleanup on the ASGI side before its sync handler. This does not add storage,
-validation, CSRF, or total-body policy.
+cleanup on the ASGI side before its sync or async handler. This does not add
+storage, validation, CSRF, or total-body policy.
 
 ## URLs and ownership
 
@@ -142,12 +142,20 @@ route kits themselves do not select or rebase mounted sources.
 Route-kit endpoints appear in the source-backed `pyganini routes list` inventory
 with the same generated URL-helper expressions as ordinary routes. A selected
 mounted route-kit source also reports its live owner, mounted source position,
-mount identity, and source-relative path. `--mount MOUNT` retains only selected
-rows for every live owner of that source identity; excluded declarations and
-unselected source rows remain absent.
+mount identity, and source-relative path. `--mount MOUNT` retains selected rows
+for every live owner of that source identity and reports excluded declarations
+as non-live diagnostic rows. Unselected source rows remain absent.
 
 Inspection reads source evidence without importing route-kit or generated
 modules and does not require current `app/_pyganini` state. `pyganini routes layouts`
 shows the human layout map, and `pyganini routes explain` reports graph-local path
 and method selection for route-kit endpoints. Template-reference analysis
 remains a successor inspection command.
+
+## Runnable example
+
+The [Kit routes example](../../examples/kit_routes) uses a typed `ReportKit` to
+pass different report rows, policy, and owner-bound generated URLs into one
+shared reports subtree. The admin owner selects an audit child while the user
+owner omits it. The shared templates contain the visible `hx-get`, `hx-target`,
+and `hx-swap` attributes for the owner-specific table fragments.

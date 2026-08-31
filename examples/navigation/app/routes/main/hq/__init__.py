@@ -1,0 +1,1 @@
+"""HQ route namespace."""

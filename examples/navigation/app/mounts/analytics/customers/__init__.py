@@ -1,0 +1,1 @@
+"""Analytics customer route namespace."""

@@ -1,0 +1,1 @@
+"""Dynamic shared report destination."""

@@ -46,7 +46,8 @@ type _CallableRole = Literal[
     "route handler",
     "kit creator",
     "kit handler",
-    "sync request-data action",
+    "captured route action",
+    "captured kit action",
     "route error handler",
 ]
 type RouteErrorHandler = Callable[
@@ -1212,9 +1213,12 @@ def _callable_mode(
                 else "kit handler must accept two positional arguments "
                 "(kit, request) and require no other argument"
                 if role == "kit handler"
-                else "sync request-data action must accept the original "
-                "request and captured payload and require no other argument"
-                if role == "sync request-data action"
+                else "captured route action must accept (request, payload) and "
+                "require no other argument"
+                if role == "captured route action"
+                else "captured kit action must accept (kit, request, payload) and "
+                "require no other argument"
+                if role == "captured kit action"
                 else "route error handler must accept two positional arguments "
                 "(request, error) and require no other argument"
             ),
@@ -1278,24 +1282,13 @@ def _validate_binding(
             surface=surface,
             details=details,
         )
-    mode = _callable_mode(
+    _callable_mode(
         handler,
         source_path=surface[8],
         role=role,
         arity=arity,
         details=details,
     )
-    if role == "sync request-data action" and mode != "sync":
-        raise DispatchError(
-            "PYGANINI013",
-            "route-callable",
-            surface[8],
-            "sync request-data action must be synchronous",
-            details=(
-                *details,
-                "callable mode: async",
-            ),
-        )
 
 
 def _validate_creator_binding(
@@ -1540,7 +1533,9 @@ def load_route(
             handler,
             surface,
             role=(
-                "sync request-data action"
+                "captured kit action"
+                if captured and kit_route
+                else "captured route action"
                 if captured
                 else "kit handler"
                 if kit_route
@@ -2635,11 +2630,11 @@ def build_endpoint(
                 result = await _invoke(
                     selected_handler,
                     (request, data),
-                    role="sync request-data action",
+                    role="captured route action",
                     source_path=selected_evidence[3],
                     details=(
                         *callable_details,
-                        "callable role: sync request-data action",
+                        "callable role: captured route action",
                         *_request_data_details(selected_request_data, arity=2),
                     ),
                 )
@@ -2673,11 +2668,11 @@ def build_endpoint(
                 result = await _invoke(
                     selected_handler,
                     (kit, request, data),
-                    role="sync request-data action",
+                    role="captured kit action",
                     source_path=selected_evidence[3],
                     details=(
                         *_evidence_details(selected_evidence),
-                        "callable role: sync request-data action",
+                        "callable role: captured kit action",
                         *_request_data_details(selected_request_data, arity=3),
                     ),
                 )

@@ -87,9 +87,10 @@ redirect, refresh, cache, or history behavior.
 Direct Starlette `FormData` and live `UploadFile` work belongs in an async route
 handler. Starlette owns that parsing; Pyganini declares its
 `python-multipart>=0.0.32,<0.0.33` runtime dependency so the public Starlette
-parser is available. A synchronous mutation action can instead use
-`request_data=capture_form(...)`, which materializes an immutable `Form`; see
-the synchronous request-data section below:
+parser is available. A mutation action can instead use
+`request_data=capture_form(...)`, which materializes an immutable `Form` before
+either a sync or async handler runs; see the captured request-data section
+below:
 
 ```python
 from starlette.datastructures import UploadFile
@@ -185,10 +186,10 @@ not blocking validation: dynamic values remain `dynamic`, templates are not
 rendered, and includes, inheritance, and application data are not followed.
 Pass generated URL values explicitly and test the final HTML and requests.
 
-## Synchronous action request data
+## Captured action request data
 
-Use an explicit `request_data=` declaration when a synchronous mutation action
-needs one bounded request value. The public values live in
+Use an explicit `request_data=` declaration when a mutation action needs one
+bounded immutable request value. The public values live in
 `pyganini.request_data` and contain no live Starlette resources:
 
 ```python
@@ -198,7 +199,8 @@ from pyganini import FragmentResponse, action, route
 from pyganini.request_data import Form, capture_form
 
 
-def create(request: Request, form: Form) -> FragmentResponse:
+async def create(request: Request, form: Form) -> FragmentResponse:
+    await save_names(form.values("name"))
     return FragmentResponse(context={"names": form.values("name")})
 
 
@@ -230,15 +232,16 @@ upload. Repeated text values and uploads retain source order. Use
 
 An opted-in route-kit action receives `(kit, request, form)` or
 `(kit, request, body)`. The creator runs before capture. Every parsed upload is
-copied to bytes and closed before the sync handler runs; duplicate references
+copied to bytes and closed before the handler runs; duplicate references
 reuse one value and one close attempt. Cleanup is cancellation-shielded. A
 primary parser or read failure remains primary with cleanup notes, while
 cleanup-only failures are raised as an ordered exception group.
 
-The original `Request` remains available for synchronous properties and
-request-local helpers. A sync handler must not call its async body, stream,
-JSON, form, or upload methods. Use an async action when the application needs
-streaming, direct Starlette `FormData`, live `UploadFile`, or another async
+Async captured handlers run on the ASGI event loop and may await application
+work after capture. Sync captured handlers run in the AnyIO worker and must not
+call async body, stream, JSON, form, or upload methods on the original
+`Request`. Use direct Starlette parsing instead of captured data when the
+application needs streaming, `FormData`, live `UploadFile`, or another async
 request API. These declarations do not add validation, CSRF, storage, or a
 whole-request body policy: those remain application- or host-owned. Unsupported
 form media types produce `415`, and the application owns final error
@@ -249,5 +252,5 @@ The [full-feature example](../../examples/full_feature) demonstrates an
 application-owned multipart action, a shared route-kit page and table with a
 full `/users` owner and read-only `/settings/users` owner, CSRF boundary, `422`
 response policy, local HTMX asset, and ordinary HTML fallback using these
-public contracts. The captured shared action receives `(kit, request, form)` and keeps
-its visible HTMX attributes in the shared Jinja template.
+public contracts. The captured shared action receives `(kit, request, form)`
+and keeps its visible HTMX attributes in the shared Jinja template.

@@ -1,0 +1,88 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, sans-serif;
+  background: #f4f6f8;
+  color: #172033;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: #155e75;
+}
+
+.site-header,
+.page-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.site-header nav,
+.route-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.navigation-frame {
+  background: #ffffff;
+  border-block: 1px solid #d6dde8;
+}
+
+.navigation-frame ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 14px 20px;
+  list-style: none;
+}
+
+.navigation-frame li:not(:last-child)::after {
+  content: "/";
+  margin-left: 8px;
+  color: #64748b;
+}
+
+.back-link {
+  display: inline-block;
+  margin: 0 20px 14px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #d6dde8;
+  border-radius: 8px;
+  padding: 22px;
+}
+
+.eyebrow {
+  color: #526071;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.mounted-report-layout {
+  border-left: 4px solid #0891b2;
+  padding-left: 18px;
+}
+
+code {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 620px) {
+  .site-header {
+    align-items: start;
+    flex-direction: column;
+  }
+}

@@ -224,21 +224,22 @@ Jinja cancellation behavior. Jinja is the only built-in v0 renderer. Rendering
 uses the graph and generated endpoint facts described in
 `rendering-responses.md`; it adds no renderer registry or runtime scanner.
 
-Async handlers retain the direct Starlette `Request` and may use its public
-`form()` context manager. Generated dispatch does not inspect HTMX headers or
-pre-read form data for async handlers. An explicitly opted-in mutation action
-adds one normalized request-data fact to the canonical action and endpoint
-surface. The generated method plan passes deterministic capture literals to
-`build_endpoint`; runtime import checks the declaration value and callable
-kind/arity before serving requests.
+Handlers using direct Starlette request parsing retain the public `Request` and
+use its async `form()` context manager. Generated dispatch does not inspect HTMX
+headers or pre-read form data unless an action explicitly opts into
+`request_data=`. That declaration adds one normalized request-data fact to the
+canonical action and endpoint surface. The generated method plan passes
+deterministic capture literals to `build_endpoint`; runtime import checks the
+declaration value and callable role/arity before serving requests.
 
 For an opted-in ordinary action, dispatch selects the handler, captures the
 declared body or form on the ASGI thread, materializes and closes every parsed
-upload, and then offloads `(request, body|form)` once. A route-kit creator runs
+upload, and then invokes `(request, body|form)` once. A route-kit creator runs
 once before capture and its handler receives `(kit, request, body|form)`. Body
-and form values are frozen and resource-free. A sync request-data handler may
-not call Starlette async request or upload methods, and ordinary non-opted-in
-surfaces keep the existing invocation path.
+and form values are frozen and resource-free. Async captured handlers run on
+the ASGI event loop; sync captured handlers use the AnyIO worker. A sync handler
+may not call Starlette async request or upload methods, and ordinary
+non-opted-in surfaces keep the existing invocation path.
 
 Body capture uses public `Request.stream()` with a cumulative byte limit. Form
 capture uses public `Request.form(...)` parser limits after public media-type

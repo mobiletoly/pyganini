@@ -1,0 +1,7 @@
+<article class="message" id="message-{{ message.identifier }}">
+  <header>
+    <strong>{{ message.author }}</strong>
+    <time datetime="{{ message.created_at.isoformat() }}">{{ message.created_at.strftime("%H:%M:%S") }}</time>
+  </header>
+  <p>{{ message.body }}</p>
+</article>

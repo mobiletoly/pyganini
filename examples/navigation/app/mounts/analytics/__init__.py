@@ -1,0 +1,1 @@
+"""Reusable analytics route source."""

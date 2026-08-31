@@ -1,4 +1,4 @@
-"""Explicit immutable request data for synchronous action handlers."""
+"""Explicit immutable request data for captured action handlers."""
 
 # pyright: reportUnnecessaryIsInstance=false, reportUnusedFunction=false
 

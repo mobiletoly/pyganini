@@ -137,3 +137,21 @@ The application owns both URLs, mounting, CSP, authorization, caching, and
 deployment. The stable helper response uses `Cache-Control: no-cache` and a
 strong content ETag. This browser behavior does not change `pyganini.sse` framing
 or move stream production into Pyganini.
+
+## Runnable chat example
+
+The [Chat example](../../examples/chat) connects generated pages and bounded
+form actions to an application-owned `/chat/events` stream. Its room handles
+replay, heartbeat timing, subscriber registration, and disconnect cleanup. The
+stream renders one shared Jinja message partial before `sse.encode_event()` and
+loads the local HTMX scripts before Pyganini's named-event browser helper.
+
+Run it from `examples/chat`:
+
+~~~bash
+uv sync --locked --all-groups --python 3.14
+uv run --locked --python 3.14 uvicorn app.main:app --reload
+~~~
+
+Open two browser contexts to test live delivery. The example README documents
+its unsigned cookie, process-local state, unbounded queues, and proxy limits.
