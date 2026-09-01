@@ -48,17 +48,17 @@ for the provider setup and credential flow.
 ## Publish
 
 Create an annotated tag whose value matches `project.version` with a leading
-`v`, such as `v0.1.0`. Pushing that tag starts the release workflow. The
+`v`, such as `vX.Y.Z`. Pushing that tag starts the release workflow. The
 workflow rejects a version mismatch, builds one artifact set, tests both
 artifacts on Python 3.13 and 3.14, generates PEP 740 attestations, and publishes
 through the `pypi` environment.
 
 After the PyPI publish job succeeds:
 
-1. Install `pyganini==0.1.0` from PyPI in a clean environment and verify the
+1. Install `pyganini==X.Y.Z` from PyPI in a clean environment and verify the
    import and `pyganini --version` output.
-2. Create a GitHub Release from the existing `v0.1.0` tag.
-3. Use `Pyganini v0.1.0` as the release title and summarize the public release
+2. Create a GitHub Release from the existing `vX.Y.Z` tag.
+3. Use `Pyganini vX.Y.Z` as the release title and summarize the public release
    in its notes.
 
 The release workflow does not create the GitHub Release. The maintainer creates

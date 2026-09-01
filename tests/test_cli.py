@@ -2871,7 +2871,7 @@ def test_help_and_version_match_for_console_and_module() -> None:
     assert "Validate app/routes" in normalized_help
     assert "check performs no application writes" in normalized_help
     assert module_version.returncode == 0
-    assert module_version.stdout == "pyganini 0.1.0\n"
+    assert module_version.stdout == "pyganini 0.1.1\n"
 
 
 def test_root_and_configuration_diagnostics_use_stable_codes(

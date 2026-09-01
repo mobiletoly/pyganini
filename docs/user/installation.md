@@ -1,18 +1,18 @@
 # Installation
 
-Pyganini supports CPython 3.13 and newer. Install the 0.1.0 release with any
+Pyganini supports CPython 3.13 and newer. Install the 0.1.1 release with any
 compliant Python package installer:
 
 ```text
-python -m pip install pyganini==0.1.0
+python -m pip install pyganini==0.1.1
 ```
 
 Maintainers can test a release candidate from built artifacts before
 publication:
 
 ```text
-python -m pip install ./dist/pyganini-0.1.0-py3-none-any.whl
-python -m pip install ./dist/pyganini-0.1.0.tar.gz
+python -m pip install ./dist/pyganini-0.1.1-py3-none-any.whl
+python -m pip install ./dist/pyganini-0.1.1.tar.gz
 ```
 
 The runtime distribution depends on compatible Starlette 1.6, Jinja 3, AnyIO

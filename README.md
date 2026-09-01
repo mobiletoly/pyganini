@@ -70,7 +70,7 @@ name = "hello-pyganini"
 version = "0.0.0"
 requires-python = ">=3.13"
 dependencies = [
-    "pyganini==0.1.0",
+    "pyganini==0.1.1",
     "starlette>=1.6.0,<1.7",
     "uvicorn>=0.52.4,<0.53",
 ]
