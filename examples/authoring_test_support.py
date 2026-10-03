@@ -126,6 +126,7 @@ def exercise_authoring(source: Path, temporary: Path) -> None:
                         page.locator('[data-authoring="edited"]').inner_text()
                         == "Edited live"
                     )
+                    page.wait_for_function("window.reloadRevisions.length === 1")
                     metadata = root / "content/privacy/page.json"
                     with page.expect_navigation(
                         wait_until="domcontentloaded"
@@ -136,9 +137,10 @@ def exercise_authoring(source: Path, temporary: Path) -> None:
                     with page.expect_navigation(wait_until="domcontentloaded"):
                         metadata.write_text('{"title":"Repaired"}')
                     assert page.title() == "Repaired"
+                    page.wait_for_function("window.reloadRevisions.length === 1")
                     nested = root / "content/privacy/new-page"
-                    nested.mkdir()
                     with page.expect_navigation(wait_until="domcontentloaded"):
+                        nested.mkdir()
                         (nested / "page.json").write_text('{"title":"New page"}')
                         (nested / "body.md").write_text("# New nested page")
                     page.goto(origin + "/privacy/new-page")

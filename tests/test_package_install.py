@@ -181,7 +181,7 @@ def _smoke_install(
     assert imported.stdout == ""
     assert (
         _run([str(command), "--version"], cwd=outside, environment=environment).stdout
-        == "pyganini 0.1.1\n"
+        == "pyganini 0.2.0\n"
     )
     assert (
         _run(
@@ -189,7 +189,7 @@ def _smoke_install(
             cwd=outside,
             environment=environment,
         ).stdout
-        == "pyganini 0.1.1\n"
+        == "pyganini 0.2.0\n"
     )
     assert (
         "app/_pyganini"

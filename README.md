@@ -71,7 +71,7 @@ name = "hello-pyganini"
 version = "0.0.0"
 requires-python = ">=3.13"
 dependencies = [
-    "pyganini==0.1.1",
+    "pyganini==0.2.0",
     "starlette>=1.6.0,<1.7",
     "uvicorn>=0.52.4,<0.53",
 ]
@@ -348,15 +348,15 @@ Python 3.13 compatibility:
 ```text
 uv python install 3.13 3.14
 uv lock --check
-uv sync --locked --all-groups --python 3.14
-uv run --locked --python 3.14 ruff format --check .
-uv run --locked --python 3.14 ruff check .
-uv run --locked --python 3.14 mypy src/pyganini
-uv run --locked --python 3.14 pyright src/pyganini
-uv run --locked --python 3.14 pytest -q tests/test_csrf_typing.py tests/test_sse_typing.py tests/test_assets.py::test_generated_asset_consumers_are_checked_by_both_type_checkers
-uv run --locked --python 3.14 pytest
-uv sync --locked --all-groups --python 3.13
-uv run --locked --python 3.13 pytest
+uv sync --locked --all-groups --all-extras --python 3.14
+uv run --locked --all-extras --python 3.14 ruff format --check .
+uv run --locked --all-extras --python 3.14 ruff check .
+uv run --locked --all-extras --python 3.14 mypy src/pyganini
+uv run --locked --all-extras --python 3.14 pyright src/pyganini
+uv run --locked --all-extras --python 3.14 pytest -q tests/test_csrf_typing.py tests/test_sse_typing.py tests/test_content_typing.py tests/test_assets.py::test_generated_asset_consumers_are_checked_by_both_type_checkers
+uv run --locked --all-extras --python 3.14 pytest
+uv sync --locked --all-groups --all-extras --python 3.13
+uv run --locked --all-extras --python 3.13 pytest
 ```
 
 Maintainer architecture records live under [`docs/arch`](docs/arch). The

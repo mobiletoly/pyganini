@@ -21,7 +21,7 @@ application root, beside `pyproject.toml`.
 
 Stop the server before changing its bootstrap. Enable the `content` extra on
 your existing Pyganini dependency. For the Getting Started project, change
-`"pyganini==0.1.1"` to `"pyganini[content]==0.1.1"`, then update the environment:
+`"pyganini==0.2.0"` to `"pyganini[content]==0.2.0"`, then update the environment:
 
 ```text
 uv lock
