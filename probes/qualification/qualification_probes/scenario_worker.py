@@ -432,7 +432,15 @@ def _q010(arguments: argparse.Namespace) -> None:
     with mirror_cleanup(root):
         _run(["uv", "lock", "--check"], cwd=root, failure=InfrastructureFailure)
         _run(
-            ["uv", "sync", "--locked", "--all-groups", "--python", "3.14"],
+            [
+                "uv",
+                "sync",
+                "--locked",
+                "--all-groups",
+                "--all-extras",
+                "--python",
+                "3.14",
+            ],
             cwd=root,
             failure=InfrastructureFailure,
         )
@@ -441,6 +449,7 @@ def _q010(arguments: argparse.Namespace) -> None:
                 "uv",
                 "run",
                 "--locked",
+                "--all-extras",
                 "--python",
                 "3.14",
                 "ruff",
@@ -448,12 +457,32 @@ def _q010(arguments: argparse.Namespace) -> None:
                 "--check",
                 ".",
             ],
-            ["uv", "run", "--locked", "--python", "3.14", "ruff", "check", "."],
-            ["uv", "run", "--locked", "--python", "3.14", "mypy", "src/pyganini"],
             [
                 "uv",
                 "run",
                 "--locked",
+                "--all-extras",
+                "--python",
+                "3.14",
+                "ruff",
+                "check",
+                ".",
+            ],
+            [
+                "uv",
+                "run",
+                "--locked",
+                "--all-extras",
+                "--python",
+                "3.14",
+                "mypy",
+                "src/pyganini",
+            ],
+            [
+                "uv",
+                "run",
+                "--locked",
+                "--all-extras",
                 "--python",
                 "3.14",
                 "pyright",
@@ -463,18 +492,21 @@ def _q010(arguments: argparse.Namespace) -> None:
                 "uv",
                 "run",
                 "--locked",
+                "--all-extras",
                 "--python",
                 "3.14",
                 "pytest",
                 "-q",
                 "tests/test_csrf_typing.py",
                 "tests/test_sse_typing.py",
+                "tests/test_content_typing.py",
                 "tests/test_assets.py::test_generated_asset_consumers_are_checked_by_both_type_checkers",
             ],
             [
                 "uv",
                 "run",
                 "--locked",
+                "--all-extras",
                 "--python",
                 "3.14",
                 "pytest",
@@ -512,12 +544,29 @@ def _q011(arguments: argparse.Namespace) -> None:
     root = arguments.candidate_root
     with mirror_cleanup(root):
         _run(
-            ["uv", "sync", "--locked", "--all-groups", "--python", "3.13"],
+            [
+                "uv",
+                "sync",
+                "--locked",
+                "--all-groups",
+                "--all-extras",
+                "--python",
+                "3.13",
+            ],
             cwd=root,
             failure=InfrastructureFailure,
         )
         _run(
-            ["uv", "run", "--locked", "--python", "3.13", "pytest", "-q"],
+            [
+                "uv",
+                "run",
+                "--locked",
+                "--all-extras",
+                "--python",
+                "3.13",
+                "pytest",
+                "-q",
+            ],
             cwd=root,
         )
 
@@ -1054,7 +1103,15 @@ def _q060(arguments: argparse.Namespace) -> None:
         if _snapshot_full_feature_products(example) != before:
             raise Finding("full-feature repeat generation changed committed products")
         _run(
-            ["uv", "sync", "--locked", "--all-groups", "--python", "3.13"],
+            [
+                "uv",
+                "sync",
+                "--locked",
+                "--all-groups",
+                "--all-extras",
+                "--python",
+                "3.13",
+            ],
             cwd=example,
             failure=InfrastructureFailure,
         )

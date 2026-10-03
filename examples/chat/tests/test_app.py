@@ -96,8 +96,8 @@ def test_local_assets_and_browser_helper_are_served(client: ExampleClient) -> No
     helper = client.get(f"/pyganini{browser.SSE_EVENT_HELPER_PATH}")
 
     assert "/assets/app.2ca0c582.css" in root.text
-    assert "/assets/vendor/htmx.min.28fae7bb.js" in root.text
-    assert "/assets/vendor/hx-sse.min.d3aeb710.js" in root.text
+    assert "/assets/vendor/htmx.min.e484d917.js" in root.text
+    assert "/assets/vendor/hx-sse.min.8a834680.js" in root.text
     assert f"/pyganini{browser.SSE_EVENT_HELPER_PATH}" in root.text
     assert "https://" not in root.text
     assert client.get("/assets/app.2ca0c582.css").status_code == 200

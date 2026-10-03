@@ -89,6 +89,7 @@ def _directory_context(
         "contacts": contacts,
         "upload_filename": upload_filename,
         "csrf_token": csrf.token(request),
+        "csrf_headers": csrf.headers(csrf.token(request)),
         "filter_urls": _filter_urls(directory),
         "navigation": nav(request).navigation(),
         "inspect_table_fragment": inspect_table_fragment,

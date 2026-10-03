@@ -93,6 +93,11 @@ check_example react_island
 check_example svelte_island
 
 export PLAYWRIGHT_BROWSERS_PATH="$repository_root/examples/.playwright"
+if [[ -z "${PYGANINI_ISLAND_PORT:-}" ]]; then
+  PYGANINI_ISLAND_PORT="$(uv run --no-project --python 3.14 python -c \
+    'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
+  export PYGANINI_ISLAND_PORT
+fi
 "$repository_root/examples/react_island/node_modules/.bin/playwright" install chromium
 
 (

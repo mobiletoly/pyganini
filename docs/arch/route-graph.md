@@ -257,3 +257,12 @@ Runtime inspection derives immutable marker literals from these existing
 endpoint, template, layout, handler, owner, and mount facts during dispatch
 generation. The graph gains no inspection registry, browser field, runtime
 occurrence, or additional filesystem scan.
+
+## Static additional-page ancestry
+
+Dispatch generation projects original live static nodes into miss plans for
+configured additional page sources. Declaration-free layout/middleware nodes
+participate, while dynamic ancestry and mounted source nodes do not. This is a
+projection of this graph, not a second scan or endpoint registry. External
+content never enters endpoints, URL interfaces, navigation, or route inventory.
+See [Content](content.md).

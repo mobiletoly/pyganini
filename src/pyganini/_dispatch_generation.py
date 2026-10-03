@@ -726,7 +726,25 @@ def _render(graph: RouteGraph) -> bytes:
     has_mounted_owners = any(owner.mounted for owner in owners)
     has_creators = any(endpoint.creator is not None for endpoint in endpoints)
     groups = _groups(endpoints)
+    source_nodes = tuple(
+        node
+        for node in graph.nodes
+        if node.mount is None
+        and not node.parameters
+        and node.source_directory.parts[:2] == ("app", "routes")
+        and (node.layouts or node.middleware_chain)
+    )
+    source_markers = {
+        marker.source.path: marker
+        for node in source_nodes
+        for marker in node.middleware_chain
+    }
     middleware_sources = _used_middleware_sources(graph, endpoints)
+    source_only_markers = tuple(
+        marker
+        for path, marker in source_markers.items()
+        if path not in {item.source.path for item in middleware_sources}
+    )
     middleware_indexes = {
         marker.source.path: index for index, marker in enumerate(middleware_sources)
     }
@@ -756,6 +774,9 @@ def _render(graph: RouteGraph) -> bytes:
             if has_mounted_owners
             else ()
         ),
+        "from pyganini import AdditionalPageSource as _AdditionalPageSource",
+        "from pyganini._dispatch import AdditionalPagePlan as _SourcePlan",
+        "from pyganini._dispatch import AdditionalPageRouter as _SourceRouter",
         "from pyganini import RouteErrorHandler as _RouteErrorHandler",
         "from pyganini import TemplateInspectionMode as _TemplateInspectionMode",
         *(
@@ -767,7 +788,7 @@ def _render(graph: RouteGraph) -> bytes:
         "from pyganini._dispatch import load_route as _load_route",
         *(
             ("from pyganini._dispatch import load_middleware as _load_middleware",)
-            if middleware_sources
+            if middleware_sources or source_only_markers
             else ()
         ),
         *(
@@ -825,6 +846,16 @@ def _render(graph: RouteGraph) -> bytes:
         )
     )
     lines.append(f"_template_names = {template_names!a}")
+    source_templates = tuple(
+        sorted(
+            {
+                layout.template.environment_name
+                for node in source_nodes
+                for layout in node.layouts
+            }
+        )
+    )
+    lines.append(f"_source_template_names = {source_templates!a}")
     if has_error_rendering:
         error_rendering = (
             _template_literal(error_page_template),
@@ -1072,6 +1103,7 @@ def _render(graph: RouteGraph) -> bytes:
             "    *,",
             "    environment: _Environment | None = None,",
             "    error_handler: _RouteErrorHandler | None = None,",
+            "    additional_page_source: _AdditionalPageSource | None = None,",
             "    template_inspection: _TemplateInspectionMode = "
             "_TemplateInspectionMode.OFF,",
             ") -> _Router:",
@@ -1081,7 +1113,10 @@ def _render(graph: RouteGraph) -> bytes:
             "    )",
             "    selected_environment = _prepare_environment(",
             "        environment,",
-            "        template_names=_template_names,",
+            "        template_names=(",
+            "            _template_names if additional_page_source is None",
+            "            else (*_template_names, *_source_template_names)",
+            "        ),",
             "        source_path='app/_pyganini/asgi.py',",
             "    )",
             "    selected_error_handler = _prepare_route_error_handler(",
@@ -1446,9 +1481,68 @@ def _render(graph: RouteGraph) -> bytes:
                     "            ),",
                 ]
             )
+    lines.extend(["    ]", "    if additional_page_source is not None:"])
+    for index, marker in enumerate(source_only_markers):
+        module_literal = _module_for_middleware_source(marker.source.path)
+        lines.extend(
+            [
+                f"        _source_middleware_{index} = _load_middleware(",
+                f"            module={module_literal!a},",
+                f"            source_path={marker.source.path.as_posix()!a},",
+                f"            route_prefix={marker.route_prefix!a},",
+                f"            expected_entries={_middleware_entries_literal(marker)},",
+                f"            binding={(marker.source.line, marker.source.column)!a},",
+                "            consumers=(),",
+                "        )",
+            ]
+        )
+    source_indexes = {
+        marker.source.path: index for index, marker in enumerate(source_only_markers)
+    }
+    lines.append("        _source_plans = (")
+    for node in source_nodes:
+        captures = tuple(
+            f"_middleware_{middleware_indexes[marker.source.path]}"
+            if marker.source.path in middleware_indexes
+            else f"_source_middleware_{source_indexes[marker.source.path]}"
+            for marker in node.middleware_chain
+        )
+        middleware = (
+            "("
+            + ", ".join(f"*{capture}" for capture in captures)
+            + ("," if len(captures) == 1 else "")
+            + ")"
+        )
+        layouts_literal = tuple(_layout_literal(layout) for layout in node.layouts)
+        markers_literal = tuple(
+            _root_layout_marker_literal(layout, surface="additional-page")
+            for layout in node.layouts
+        )
+        chain_literal = _middleware_chain_literal(node.middleware_chain)
+        lines.extend(
+            [
+                "            _SourcePlan(",
+                f"                prefix={node.route_path!a},",
+                f"                layouts={layouts_literal!a},",
+                f"                layout_markers={markers_literal!a},",
+                f"                middleware={middleware},",
+                f"                chain={chain_literal!a},",
+                "            ),",
+            ]
+        )
     lines.extend(
         [
-            "    ]",
+            "        )",
+            "        return _SourceRouter(",
+            "            routes=_generated_routes, source=additional_page_source,",
+            "            plans=_source_plans, environment=selected_environment,",
+            "            template_inspection=selected_template_inspection,",
+            "            error_handler=selected_error_handler,",
+            "        )",
+        ]
+    )
+    lines.extend(
+        [
             "    if selected_error_handler is None:",
             "        return _Router(",
             "            routes=_generated_routes,",

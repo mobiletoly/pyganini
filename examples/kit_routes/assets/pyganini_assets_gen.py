@@ -29,9 +29,9 @@ _MANIFEST: dict[str, Asset] = {
     ),
     "vendor/htmx.min.js": Asset(
         name="vendor/htmx.min.js",
-        path="/assets/vendor/htmx.min.28fae7bb.js",
-        hash="28fae7bb",
-        size=36282,
+        path="/assets/vendor/htmx.min.e484d917.js",
+        hash="e484d917",
+        size=36716,
     ),
 }
 

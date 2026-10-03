@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import socket
 import threading
@@ -10,6 +11,7 @@ import time
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from importlib import resources
+from pathlib import Path
 from urllib.parse import urlsplit
 
 import pytest
@@ -206,6 +208,31 @@ async def _probe_events(request: Request) -> Response:
     return Response(frames[case], media_type=sse.MEDIA_TYPE)
 
 
+async def _status_controls(request: Request) -> HTMLResponse:
+    script = assets.path("vendor/htmx.min.js", base_path="/directory")
+    buttons = "".join(
+        f'<button id="status-{status}" hx-get="/probe-status/{status}" '
+        'hx-target="#status-target" hx-swap="innerHTML" '
+        'hx-status:422="swap:outerHTML" hx-status:4xx="swap:none" '
+        'hx-status:5xx="swap:none">Test</button>'
+        for status in (422, 403, 500, 204, 304)
+    )
+    return HTMLResponse(
+        "<!doctype html><html><body>"
+        + buttons
+        + '<div id="status-target">Original</div>'
+        + f'<script src="{script}"></script></body></html>'
+    )
+
+
+async def _status_response(request: Request) -> HTMLResponse:
+    status = int(request.path_params["status"])
+    return HTMLResponse(
+        f'<div id="status-target" data-status="{status}">Response</div>',
+        status_code=status,
+    )
+
+
 @contextmanager
 def _local_server() -> Generator[str]:
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -218,6 +245,8 @@ def _local_server() -> Generator[str]:
             Starlette(
                 routes=[
                     StarletteRoute("/probe", _probe_page),
+                    StarletteRoute("/probe-status-controls", _status_controls),
+                    StarletteRoute("/probe-status/{status}", _status_response),
                     StarletteRoute("/probe-capture.js", _probe_capture),
                     StarletteRoute("/probe-events/{case}", _probe_events),
                     Mount(
@@ -918,7 +947,7 @@ def test_template_inspector_replaces_stale_htmx_frames_and_discovers_units() -> 
                 """(markup) => {
                   const target = document.querySelector('#target');
                   target.innerHTML = markup;
-                  window.dispatchEvent(new CustomEvent('htmx:afterSwap'));
+                  window.dispatchEvent(new CustomEvent('htmx:after:swap'));
                 }""",
                 f"{second_start}<span>B</span>{second_end}",
             )
@@ -930,7 +959,7 @@ def test_template_inspector_replaces_stale_htmx_frames_and_discovers_units() -> 
                 """(markup) => {
                   const target = document.querySelector('#target');
                   target.outerHTML = '<div id="target">' + markup + '</div>';
-                  window.dispatchEvent(new CustomEvent('htmx:afterSettle'));
+                  window.dispatchEvent(new CustomEvent('htmx:after:settle'));
                 }""",
                 f"{third_start}<span>C</span>{third_end}",
             )
@@ -993,7 +1022,7 @@ def test_browser_full_local_workflow() -> None:
             assert page.evaluate(
                 """() => {
                   const extension = window.__pyganiniExtensions['pyganini-sse-event'];
-                  const hook = extension.htmx_before_sse_message;
+                  const hook = extension.htmx_sse_before_message;
                   hook(null, null);
                   hook(document.body, null);
                   hook(document.body, {});
@@ -1084,6 +1113,15 @@ def test_browser_full_local_workflow() -> None:
 
             page.close()
             page = browser.new_page()
+            page.add_init_script("""
+                window.stableHtmxEvents = {swap: 0, settle: 0};
+                document.addEventListener('htmx:after:swap', () => {
+                    window.stableHtmxEvents.swap += 1;
+                });
+                document.addEventListener('htmx:after:settle', () => {
+                    window.stableHtmxEvents.settle += 1;
+                });
+            """)
             page.on("pageerror", _record_page_error(page_errors))
             page.on(
                 "console",
@@ -1196,8 +1234,9 @@ def test_browser_full_local_workflow() -> None:
                 == 1
             )
             assert page.locator("html").get_attribute("data-pyganini-js") == "ready"
-            assert page.evaluate("() => window.htmx.version") == "4.0.0-beta6"
+            assert page.evaluate("() => window.htmx.version") == "4.0.0"
 
+            original_token = page.locator('input[name="csrf_token"]').input_value()
             with page.expect_response(
                 lambda response: (
                     response.request.method == "POST"
@@ -1207,13 +1246,17 @@ def test_browser_full_local_workflow() -> None:
                 page.locator("#contact-name").fill("")
                 page.get_by_role("button", name="Add contact").click()
             assert invalid_response.value.status == 422
+            assert (
+                invalid_response.value.request.headers["x-csrf-token"] == original_token
+            )
             assert page.locator("#contact-name-error").inner_text() == (
                 "Name is required."
             )
 
             page.locator("#contact-name").fill("Blocked Contact")
-            page.locator('input[name="csrf_token"]').evaluate(
-                "(element) => { element.value = 'invalid-token'; }"
+            page.locator("#users-directory").evaluate(
+                "(element) => element.setAttribute('hx-headers:inherited', "
+                "JSON.stringify({'X-CSRF-Token': 'invalid-token'}))"
             )
             with page.expect_response(
                 lambda response: (
@@ -1226,7 +1269,15 @@ def test_browser_full_local_workflow() -> None:
             assert page.locator("#users-directory").count() == 1
             assert page.locator("#contact-name").input_value() == "Blocked Contact"
 
+            page.context.clear_cookies()
             page.reload()
+            rotated_token = page.locator('input[name="csrf_token"]').input_value()
+            assert rotated_token != original_token
+            header_text = page.locator("#users-directory").get_attribute(
+                "hx-headers:inherited"
+            )
+            assert header_text is not None
+            assert json.loads(header_text)["X-CSRF-Token"] == rotated_token
             page.locator("#contact-name").fill("Browser Contact")
             page.locator("#contact-avatar").set_input_files(
                 {
@@ -1239,8 +1290,11 @@ def test_browser_full_local_workflow() -> None:
                 lambda response: (
                     response.request.method == "POST" and response.status == 200
                 )
-            ):
+            ) as created_response:
                 page.get_by_role("button", name="Add contact").click()
+            assert (
+                created_response.value.request.headers["x-csrf-token"] == rotated_token
+            )
             assert page.locator("#upload-filename").inner_text() == "browser.txt"
             assert page.locator("text=Browser Contact").count() >= 1
 
@@ -1261,6 +1315,9 @@ def test_browser_full_local_workflow() -> None:
                 == 1
             )
 
+            page.wait_for_function(
+                "window.stableHtmxEvents.swap > 0 && window.stableHtmxEvents.settle > 0"
+            )
             page.get_by_role("link", name="All").click()
             page.get_by_role("link", name="Ada Lovelace").click()
             page.wait_for_url(
@@ -1329,3 +1386,47 @@ def test_browser_full_local_workflow() -> None:
             any(status in message for status in ("403", "418", "422"))
             for message in console_errors
         )
+
+
+def test_stable_visible_status_rules_with_real_responses() -> None:
+    with _local_server() as base_url, sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        page = browser.new_page()
+        page.add_init_script("""
+            window.requestFinished = false;
+            document.addEventListener('htmx:finally:request', () => {
+                window.requestFinished = true;
+            });
+        """)
+        try:
+            for status in (422, 403, 500, 204, 304):
+                page.goto(base_url + "/probe-status-controls")
+                assert page.evaluate("window.htmx.version") == "4.0.0"
+                with page.expect_response(
+                    lambda response: response.url.endswith(f"/probe-status/{status}")  # noqa: B023
+                ) as response:
+                    page.locator(f"#status-{status}").click()
+                assert response.value.status == status
+                page.wait_for_function("window.requestFinished")
+                if status == 422:
+                    assert (
+                        page.locator("#status-target").get_attribute("data-status")
+                        == "422"
+                    )
+                else:
+                    assert page.locator("#status-target").inner_text() == "Original"
+        finally:
+            page.close()
+            browser.close()
+
+
+def test_content_authoring_supervisor_in_real_browser(tmp_path: Path) -> None:
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    try:
+        from authoring_test_support import exercise_authoring
+
+        exercise_authoring(Path(__file__).resolve().parents[1], tmp_path)
+    finally:
+        sys.path.pop(0)

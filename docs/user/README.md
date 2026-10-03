@@ -21,6 +21,9 @@ build an application.
   evidence.
 - [Routes](routes.md) covers live route packages, declarations, path mapping,
   layouts, and static validation.
+- [Development](development.md) covers app-owned refresh and restart workflows.
+- [Content pages](content-pages.md) covers trusted HTML and Markdown, live reads,
+  additional page sources, static ancestry, and packaged-resource lifetime.
 - [Route middleware](middleware.md) covers live route-tree middleware, ordering,
   mounted-owner scope, diagnostics, and host boundaries.
 - [Error composition](errors.md) covers the optional generated-route error

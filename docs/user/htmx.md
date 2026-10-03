@@ -159,14 +159,14 @@ public exceptions when they need route-local error HTML.
 ## Validation and host policy
 
 An action can return a `FragmentResponse` with an application-selected `422`
-status and validation HTML. HTMX 4 beta6 swaps every response by default except
-204 and 304, including error responses. An application that wants a bounded
-validation workflow must configure and test its own `htmx.config.noSwap` policy;
-the full-feature example permits the `422` redisplay while suppressing other
-4xx and 5xx swaps. Pyganini installs no JavaScript, middleware, automatic CSRF
+status and validation HTML. HTMX 4.0.0 swaps responses by default except 204
+and 304. Keep application status policy visible on the triggering element:
+`hx-status:422="swap:outerHTML"`, `hx-status:4xx="swap:none"`, and
+`hx-status:5xx="swap:none"`. The exact 422 rule takes precedence over its
+wildcard; the full-feature example uses these rules for validation redisplay. Pyganini installs no JavaScript, middleware, automatic CSRF
 enforcement, `Vary`, cache, redirect, target, or swap policy. An application
 may explicitly mount `pyganini.csrf.TokenMiddleware` and render its visible
-`hx-headers` value; the application still chooses parsing, validation, and the
+`hx-headers:inherited` value; the application still chooses parsing, validation, and the
 failed response. Pyganini rejects duplicate token headers or configured cookies;
 form handlers must require exactly one textual token value. See
 [CSRF helpers](csrf.md).

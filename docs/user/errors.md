@@ -112,7 +112,10 @@ callbacks run on the ASGI event loop.
 The callback covers only generated dispatch. Host API routes, static files,
 outer host middleware, lifespan, OpenAPI, the ASGI server, and deployment stay
 outside it. Matched route middleware runs inside the generated error boundary;
-generated 404 and 405 do not enter route middleware.
+Generated 405 responses do not enter route middleware. Without an additional
+page source, generated 404 responses also bypass it. Configured sources and
+their declined 404 presentation use eligible static live middleware. Source
+error pages use only live root layouts; see [Content pages](content-pages.md).
 
 The generated `router = create_router()` remains callback-free. Each explicit
 `create_router(error_handler=...)` call captures its callback independently.

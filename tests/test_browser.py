@@ -19,7 +19,7 @@ HELPER_BYTES = b"""(function () {
   }
 
   window.htmx.registerExtension("pyganini-sse-event", {
-    htmx_before_sse_message: function (element, detail) {
+    htmx_sse_before_message: function (element, detail) {
       if (!element || !detail || !detail.message) {
         return;
       }
@@ -41,9 +41,9 @@ HELPER_BYTES = b"""(function () {
   });
 })();
 """
-ETAG = '"beaea931c38ac5c67f07ebe787bccd96ec4a7a0f85176103a58f41370de24941"'
+ETAG = '"ef961ea2bfb7b57ee2acc40a8ae0f7469a40bf02be4c25933bf2463433afb8cf"'
 TEMPLATE_INSPECTOR_ETAG = (
-    '"8229d016bc7d4b2f74acab19fa75019a83cd0128988302ca1ccc53c803daba59"'
+    '"25e3c2051abd5576fd17ae70cd436b099f4c04b5f2248c08bf5eb7a5b8e40304"'
 )
 TEMPLATE_INSPECTOR_BYTES = (
     resources.files("pyganini.browser")
@@ -317,3 +317,11 @@ def test_missing_required_resource_has_exact_failure(
         match=message,
     ):
         browser.create_app()
+
+
+def test_inspector_uses_stable_htmx_events() -> None:
+    source = TEMPLATE_INSPECTOR_BYTES.decode("ascii")
+    assert '"htmx:after:swap"' in source
+    assert '"htmx:after:settle"' in source
+    assert '"htmx:afterSwap"' not in source
+    assert '"htmx:afterSettle"' not in source

@@ -1,4 +1,4 @@
-<section id="users-directory">
+<section id="users-directory" hx-headers:inherited='{{ csrf_headers }}'>
   {% if directory.show_create %}
   <form
     id="contact-form"
@@ -8,7 +8,10 @@
     hx-encoding="multipart/form-data"
     hx-post="{{ directory.urls.create_url }}"
     hx-target="#users-directory"
-    hx-swap="outerHTML">
+    hx-swap="outerHTML"
+    hx-status:422="swap:outerHTML"
+    hx-status:4xx="swap:none"
+    hx-status:5xx="swap:none">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <div class="field">
       <label for="contact-name">Name</label>

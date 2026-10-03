@@ -26,6 +26,7 @@ from starlette.types import ASGIApp, Lifespan, Message, Receive, Scope, Send
 from pyganini._declarations import KitRouteDef, KitRouteMount, RouteDef
 from pyganini._navigation import NavigationFact, _prepare_navigation
 from pyganini._render import (
+    AdditionalPage,
     EmbeddedFragmentEvidence,
     FragmentResponse,
     InspectionMarkerEvidence,
@@ -39,16 +40,22 @@ from pyganini._render import (
     render_response,
     validate_environment,
 )
+from pyganini._request_path import local_path as _local_request_path
 from pyganini.request_data import BodyCapture, FormCapture, _capture_request_data
 
 type _Kind = Literal["page", "fragment", "action"]
 type _CallableRole = Literal[
+    "additional page source",
     "route handler",
     "kit creator",
     "kit handler",
     "captured route action",
     "captured kit action",
     "route error handler",
+]
+type AdditionalPageSource = Callable[
+    [Request],
+    AdditionalPage | Response | Awaitable[AdditionalPage | Response | None] | None,
 ]
 type RouteErrorHandler = Callable[
     [Request, Exception],
@@ -154,6 +161,7 @@ class DispatchError(RuntimeError):
             "PYGANINI015",
             "PYGANINI018",
             "PYGANINI019",
+            "PYGANINI023",
         ],
         phase: Literal[
             "route-import",
@@ -163,6 +171,7 @@ class DispatchError(RuntimeError):
             "render-template",
             "route-middleware",
             "route-error-handler",
+            "additional-page-source",
         ],
         path: str,
         message: str,
@@ -718,6 +727,261 @@ class RouteErrorRouter(StarletteRouter):
         await _send_route_error_response(request, response, scope, receive, send)
 
 
+@dataclass(frozen=True, slots=True)
+class AdditionalPagePlan:
+    """Generated static miss ancestry; never a route registration."""
+
+    prefix: str
+    layouts: tuple[LayoutEvidence, ...]
+    layout_markers: tuple[InspectionMarkerEvidence, ...]
+    middleware: tuple[Middleware, ...]
+    chain: tuple[_MiddlewareMarkerEvidence, ...]
+
+
+def _source_failure(
+    message: str,
+    *,
+    details: Sequence[str] = (),
+    cause: BaseException | None = None,
+) -> DispatchError:
+    error = DispatchError(
+        "PYGANINI023",
+        "additional-page-source",
+        "app/_pyganini/asgi.py",
+        message,
+        details=details,
+    )
+    if cause is not None:
+        error.__cause__ = cause
+    return error
+
+
+class AdditionalPageRouter(StarletteRouter):
+    """Resolve an ordinary HTTP miss within its generated static ancestry."""
+
+    def __init__(
+        self,
+        *,
+        routes: Sequence[BaseRoute],
+        source: AdditionalPageSource,
+        plans: tuple[AdditionalPagePlan, ...],
+        environment: Environment,
+        template_inspection: TemplateInspectionMode,
+        error_handler: _PreparedRouteErrorHandler | None,
+    ) -> None:
+        callback = _outer_for_classification(source)
+        callback_name = (
+            f"{callback.__module__}.{callback.__qualname__}"
+            if inspect.isfunction(callback) or inspect.ismethod(callback)
+            else f"{type(callback).__module__}.{type(callback).__qualname__}.__call__"
+        )
+        self._source_details = (f"callback: {callback_name}",)
+        try:
+            self._source_mode = _callable_mode(
+                source,
+                source_path="app/_pyganini/asgi.py",
+                role="additional page source",
+                arity=1,
+                details=self._source_details,
+            )
+        except DispatchError as error:
+            raise _source_failure(
+                "additional page source must be a supported callable "
+                "accepting (request)",
+                details=(*self._source_details, error.message),
+                cause=error,
+            ) from error
+        self._source = source
+        self._environment = environment
+        self._inspection = template_inspection
+        self._error_handler = error_handler
+        self._plans: list[tuple[AdditionalPagePlan, ASGIApp]] = []
+        for plan in plans:
+            app: ASGIApp = functools.partial(self._resolve, plan=plan)
+            try:
+                for middleware in reversed(plan.middleware):
+                    cls, args, kwargs = middleware
+                    app = cls(app, *args, **kwargs)
+            except BaseException as error:
+                raise middleware_construction_error(
+                    path=plan.prefix,
+                    methods=(),
+                    chain=plan.chain,
+                    consumers=(),
+                ) from error
+            self._plans.append((plan, app))
+        self._empty_plan = AdditionalPagePlan("/", (), (), (), ())
+        super().__init__(routes=routes, redirect_slashes=False)
+
+    async def _final_not_found(
+        self,
+        scope: Scope,
+        receive: Receive,
+        send: Send,
+        *,
+        normalized_path: str | None = None,
+    ) -> None:
+        if self._error_handler is not None:
+            request = Request(scope, receive, send)
+            response = await _call_route_error_handler(
+                self._error_handler,
+                request,
+                HTTPException(404),
+                normalized_path=normalized_path,
+                presentation="router error",
+            )
+            if response is not None:
+                await _send_route_error_response(
+                    request, response, scope, receive, send
+                )
+                return
+        await super().not_found(scope, receive, send)
+
+    async def _resolve(
+        self,
+        scope: Scope,
+        receive: Receive,
+        send: Send,
+        *,
+        plan: AdditionalPagePlan,
+    ) -> None:
+        normalized_path = cast(str, scope["pyganini.additional_page_path"])
+        request = Request(scope, receive, send)
+        try:
+            if self._source_mode == "async":
+                result: object = self._source(request)
+            else:
+                result = await _run_sync(
+                    functools.partial(self._source, request), abandon_on_cancel=True
+                )
+            if inspect.isawaitable(result):
+                result = await cast(Awaitable[object], result)
+            if isinstance(result, AdditionalPage):
+                try:
+                    result = await render_response(
+                        environment=self._environment,
+                        result=result,
+                        template=None,
+                        layouts=plan.layouts,
+                        template_inspection=self._inspection,
+                        layout_markers=plan.layout_markers,
+                    )
+                except RenderFailure as error:
+                    diagnostic = DispatchError(
+                        "PYGANINI015",
+                        error.phase,
+                        "app/_pyganini/asgi.py",
+                        error.message,
+                        details=(*_render_details(None, plan.layouts), *error.details),
+                    )
+                    raise diagnostic from error.__cause__
+                except (TypeError, ValueError) as error:
+                    raise _source_failure(
+                        "additional page source returned an invalid render value",
+                        details=(
+                            *self._source_details,
+                            *_render_details(None, plan.layouts),
+                        ),
+                        cause=error,
+                    ) from error
+            elif result is not None and not isinstance(result, Response):
+                raise _source_failure(
+                    "additional page source must return AdditionalPage, "
+                    "a Starlette Response, or None",
+                    details=(
+                        *self._source_details,
+                        f"actual result type: {type(result).__name__}",
+                        *_render_details(None, plan.layouts),
+                        f"normalized path: {normalized_path}",
+                        f"middleware chain: {plan.chain!r}",
+                    ),
+                )
+        except Exception as error:
+            # Source errors are presented inside the selected middleware chain.
+            scope["pyganini.additional_page_error_attempted"] = True
+            if self._error_handler is None:
+                raise
+            response = await _call_route_error_handler(
+                self._error_handler,
+                request,
+                error,
+                normalized_path=normalized_path,
+                presentation="additional page source error",
+            )
+            if response is None:
+                raise
+            await _send_route_error_response(request, response, scope, receive, send)
+            if not isinstance(error, HTTPException):
+                raise
+            return
+        if result is None:
+            scope["pyganini.additional_page_error_attempted"] = True
+            await self._final_not_found(
+                scope, receive, send, normalized_path=normalized_path
+            )
+        else:
+            assert isinstance(result, Response)
+            await _send_route_error_response(request, result, scope, receive, send)
+
+    async def not_found(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await super().not_found(scope, receive, send)
+            return
+        evidence = _local_request_path(scope)
+        if evidence is None:
+            await self._final_not_found(scope, receive, send)
+            return
+        path = evidence[1] if evidence[1] is not None else evidence[0]
+        selected = [
+            (plan, app)
+            for plan, app in self._plans
+            if plan.prefix == "/"
+            or path == plan.prefix
+            or path.startswith(plan.prefix + "/")
+        ]
+        if selected:
+            plan, app = max(selected, key=lambda item: len(item[0].prefix))
+        else:
+            plan = self._empty_plan
+            app = functools.partial(self._resolve, plan=plan)
+        tracker = _ResponseStartTracker(send)
+        missing = object()
+        previous = scope.pop("pyganini.additional_page_error_attempted", missing)
+        previous_path = scope.get("pyganini.additional_page_path", missing)
+        scope["pyganini.additional_page_path"] = evidence[0]
+        try:
+            await app(scope, receive, tracker)
+        except Exception as error:
+            if (
+                tracker.started
+                or scope.get("pyganini.additional_page_error_attempted")
+                or self._error_handler is None
+            ):
+                raise
+            request = Request(scope, receive, tracker)
+            response = await _call_route_error_handler(
+                self._error_handler,
+                request,
+                error,
+                normalized_path=evidence[0],
+                presentation="additional page middleware error",
+            )
+            if response is None:
+                raise
+            await _send_route_error_response(request, response, scope, receive, tracker)
+            if not isinstance(error, HTTPException):
+                raise
+        finally:
+            if previous is missing:
+                scope.pop("pyganini.additional_page_error_attempted", None)
+            else:
+                scope["pyganini.additional_page_error_attempted"] = previous
+            if previous_path is missing:
+                scope.pop("pyganini.additional_page_path", None)
+            else:
+                scope["pyganini.additional_page_path"] = previous_path
+
+
 def _format_details(
     *,
     kind: str,
@@ -1219,6 +1483,9 @@ def _callable_mode(
                 else "captured kit action must accept (kit, request, payload) and "
                 "require no other argument"
                 if role == "captured kit action"
+                else "additional page source must accept one positional request "
+                "and require no other argument"
+                if role == "additional page source"
                 else "route error handler must accept two positional arguments "
                 "(request, error) and require no other argument"
             ),

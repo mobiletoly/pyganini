@@ -29,18 +29,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## htmx.org 4.0.0-beta6
+## htmx.org 4.0.0
 
 - License: BSD-0-Clause
-- Source: https://www.npmjs.com/package/htmx.org/v/4.0.0-beta6
-- Input: `assets/public/vendor/htmx.min.js`
-- Build output: `assets/build/vendor/htmx.min.js`
-- Served output: `assets/dist/vendor/htmx.min.28fae7bb.js`
-- SHA-256: `28fae7bbe8e8142b702debb9d5234a9a436d9435a4b5165b195aa1a7ed840d25`
+- Versioned archive: https://registry.npmjs.org/htmx.org/-/htmx.org-4.0.0.tgz
+- npm integrity: `sha512-T/171FUY93Kdfp8t+DnHdk45QvKRiBhVhhrwSzrXgUi4pHKvhp77dUA/qg8FAjsFWPIHNbmUuIdCrcVHuiZWng==`
+- Archive SHA-256: `f252cb573805081541b9a89bf1cf177aaa56ce73de1bfee02f9c89d5510f174d`
+- Core input: `assets/build/vendor/htmx.min.js`
+- Core source: https://unpkg.com/htmx.org@4.0.0/dist/htmx.min.js
+- Core SHA-256: `e484d9171a9db30a39c8f16e3d709d4137f3211c659f8e6125816635033d593f`
 
 ```text
 Zero-Clause BSD
-===============
+=============
 
 Permission to use, copy, modify, and/or distribute this software for
 any purpose with or without fee is hereby granted.
@@ -53,9 +54,3 @@ DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
 AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
-
-## Build-only dependencies
-
-Vite, TypeScript, the Svelte Vite plugin, svelte-check, type packages, and
-Playwright are development dependencies, not separate shipped browser runtime
-assets.

@@ -29,21 +29,27 @@ _MANIFEST: dict[str, Asset] = {
     ),
     "app.js": Asset(
         name="app.js",
-        path="/assets/app.acae4fc7.js",
-        hash="acae4fc7",
-        size=478,
+        path="/assets/app.5c08e654.js",
+        hash="5c08e654",
+        size=55,
+    ),
+    "dev-reload.js": Asset(
+        name="dev-reload.js",
+        path="/assets/dev-reload.d5db60a8.js",
+        hash="d5db60a8",
+        size=701,
     ),
     "vendor/htmx.min.js": Asset(
         name="vendor/htmx.min.js",
-        path="/assets/vendor/htmx.min.28fae7bb.js",
-        hash="28fae7bb",
-        size=36282,
+        path="/assets/vendor/htmx.min.e484d917.js",
+        hash="e484d917",
+        size=36716,
     ),
     "vendor/hx-sse.min.js": Asset(
         name="vendor/hx-sse.min.js",
-        path="/assets/vendor/hx-sse.min.d3aeb710.js",
-        hash="d3aeb710",
-        size=5489,
+        path="/assets/vendor/hx-sse.min.8a834680.js",
+        hash="8a834680",
+        size=6225,
     ),
 }
 

@@ -46,15 +46,20 @@ route middleware instances. Marker-free generated output gains no
 middleware-specific imports, captures, or route middleware projection; the
 independent generated-route error callback extension remains present.
 
-Route middleware runs only after Starlette accepts a generated path and method.
+For declared endpoints, route middleware runs after Starlette accepts a
+generated path and method.
 It can short-circuit with an application response before navigation, a kit
 creator, request-data capture, a handler, rendering, or background work runs.
-It does not wrap generated 404 or 405 responses, static mounts, host API
-routes, lifespan, or outer-host failures. Exceptions pass to the enclosing
+Without an additional page source, it does not wrap generated 404 outcomes.
+Method-mismatched 405 responses, static mounts, host API routes, lifespan, and
+outer-host failures remain outside it. With an additional page source, eligible
+static live ancestry wraps source resolution and declined final 404 handling.
+See [Content pages](content-pages.md). Exceptions pass to the enclosing
 host unchanged unless the application opts into generated-route error
 composition with `create_router(error_handler=...)`. The callback boundary sits
 outside matched route middleware, so it can present a route middleware
-exception; 404 and 405 still bypass route middleware.
+exception. Source exceptions use their selected static middleware chain;
+405 responses still bypass route middleware.
 
 The host application owns authentication, authorization, sessions, persistence,
 validation, dependencies, total-body policy, static files, outer middleware,

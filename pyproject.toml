@@ -24,6 +24,13 @@ dependencies = [
     "starlette>=1.6.0,<1.7",
 ]
 
+[project.optional-dependencies]
+content = [
+    "markdown-it-py>=4.2.0,<5",
+    "mdit-py-plugins>=0.6.1,<0.7",
+    "linkify-it-py>=2.2.0,<3",
+]
+
 [project.urls]
 Homepage = "https://github.com/mobiletoly/pyganini"
 Repository = "https://github.com/mobiletoly/pyganini"

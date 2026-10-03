@@ -118,7 +118,9 @@ managed indicators is a fail-closed configuration error.
 An application-owned watcher may watch `assets/build` together with its source
 files. It must ignore `assets/dist`, `assets/.pyganini`, and the generated lookup
 module, prepare generation and check while the current server remains alive,
-and replace the server only after both succeed. Browser refresh remains manual.
+and replace the server only after both succeed. The two content examples use
+the [application-owned development loop](development.md) to notify browsers
+after a successful replacement; asset compilation remains separate.
 
 CI should run the application asset tool first, then `pyganini assets check`, then
 normal `pyganini generate` and `pyganini check`, followed by host and browser tests.

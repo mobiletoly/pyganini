@@ -57,17 +57,19 @@ def test_readme_indexes_every_runnable_example() -> None:
     example_directories = {
         path.name
         for path in (REPOSITORY / "examples").iterdir()
-        if path.is_dir() and not path.name.startswith(".")
+        if path.is_dir() and (path / "pyproject.toml").is_file()
     }
 
     assert example_directories == {
         "chat",
+        "content_pages",
         "full_feature",
         "kit_routes",
         "navigation",
         "react_island",
         "svelte_island",
     }
+    assert "[Content pages](examples/content_pages)" in readme
     assert "[Chat](examples/chat)" in readme
     assert "[Kit route mounts](examples/kit_routes)" in readme
     assert "[Navigation](examples/navigation)" in readme
@@ -95,6 +97,8 @@ def test_user_guide_indexes_match_and_cover_all_guides() -> None:
         "client-islands.md",
         "route-inspection.md",
         "routes.md",
+        "development.md",
+        "content-pages.md",
         "middleware.md",
         "errors.md",
         "route-kits.md",

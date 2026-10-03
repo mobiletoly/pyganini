@@ -20,7 +20,7 @@ from pyganini._declarations import (
     route_kit,
     route_mount,
 )
-from pyganini._dispatch import RouteErrorHandler
+from pyganini._dispatch import AdditionalPageSource, RouteErrorHandler
 from pyganini._navigation import (
     Destination,
     Navigation,
@@ -37,6 +37,7 @@ from pyganini._navigation import (
     to,
 )
 from pyganini._render import (
+    AdditionalPage,
     FragmentResponse,
     FragmentRouteResponse,
     Page,
@@ -49,6 +50,8 @@ from pyganini._render import (
 
 __all__ = [
     "ActionDef",
+    "AdditionalPage",
+    "AdditionalPageSource",
     "Destination",
     "FragmentResponse",
     "FragmentRouteDef",

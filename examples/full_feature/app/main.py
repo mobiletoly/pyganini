@@ -5,9 +5,10 @@ from __future__ import annotations
 import os
 import secrets
 from collections.abc import AsyncIterator
+from dataclasses import replace
 from pathlib import Path
 
-from pyganini import TemplateInspectionMode, browser, csrf, sse
+from pyganini import AdditionalPage, TemplateInspectionMode, browser, content, csrf, sse
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
@@ -20,8 +21,10 @@ from assets import pyganini_assets_gen as assets
 from .contacts import ContactRepository
 from .dependencies import Dependencies
 from .errors import route_error_handler
+from .routes.handlers import build_layout
 from .security import ExamplePolicyMiddleware, ImmutableAssetCacheMiddleware
 
+CONTENT_ROOT = Path(__file__).resolve().parents[1] / "content"
 ASSET_DIRECTORY = Path(__file__).resolve().parents[1] / "assets" / "dist"
 FINGERPRINTED_ASSET_PATHS = tuple(
     asset.path.removeprefix("/assets/") for asset in assets.manifest().values()
@@ -63,6 +66,7 @@ async def events(request: Request) -> StreamingResponse:
 def create_app(
     *,
     dependencies: Dependencies | None = None,
+    content_root: Path = CONTENT_ROOT,
     template_inspection: TemplateInspectionMode = TemplateInspectionMode.OFF,
 ) -> Starlette:
     """Construct a fresh host application and dependency state."""
@@ -70,6 +74,12 @@ def create_app(
         repository=ContactRepository(),
         csrf=csrf.Guard(secret=secrets.token_bytes(32)),
     )
+    pages = content.new(content.Config(root=content_root))
+
+    def additional_page(request: Request) -> AdditionalPage | None:
+        page = pages.resolve(request)
+        return None if page is None else replace(page, layout=build_layout(request, ""))
+
     application = Starlette(
         routes=[
             Mount(
@@ -86,6 +96,7 @@ def create_app(
                 "/",
                 app=create_router(
                     error_handler=route_error_handler,
+                    additional_page_source=additional_page,
                     template_inspection=template_inspection,
                 ),
             ),
@@ -107,7 +118,9 @@ def create_development_app() -> Starlette:
         raise RuntimeError(
             "PYGANINI_TEMPLATE_INSPECTION must be off, comments, or overlay"
         ) from error
-    return create_app(template_inspection=mode)
+    from app.development import install
+
+    return install(create_app(template_inspection=mode))
 
 
 app: Starlette = create_app()

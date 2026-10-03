@@ -8,13 +8,13 @@
     },
     {
       "logical": "vendor/htmx.min.js",
-      "dist": "assets/dist/vendor/htmx.min.28fae7bb.js",
-      "hash": "28fae7bb"
+      "dist": "assets/dist/vendor/htmx.min.e484d917.js",
+      "hash": "e484d917"
     },
     {
       "logical": "vendor/hx-sse.min.js",
-      "dist": "assets/dist/vendor/hx-sse.min.d3aeb710.js",
-      "hash": "d3aeb710"
+      "dist": "assets/dist/vendor/hx-sse.min.8a834680.js",
+      "hash": "8a834680"
     }
   ]
 }

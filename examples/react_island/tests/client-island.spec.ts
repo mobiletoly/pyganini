@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 test("React island saves, unmounts for boosted navigation, and remounts", async ({
-  page,
+  page, baseURL,
 }) => {
   const externalRequests: string[] = [];
   page.on("request", (request) => {
-    if (new URL(request.url()).origin !== "http://127.0.0.1:8765") {
+    if (new URL(request.url()).origin !== new URL(baseURL!).origin) {
       externalRequests.push(request.url());
     }
   });

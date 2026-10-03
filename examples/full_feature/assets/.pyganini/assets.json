@@ -8,18 +8,23 @@
     },
     {
       "logical": "app.js",
-      "dist": "assets/dist/app.acae4fc7.js",
-      "hash": "acae4fc7"
+      "dist": "assets/dist/app.5c08e654.js",
+      "hash": "5c08e654"
+    },
+    {
+      "logical": "dev-reload.js",
+      "dist": "assets/dist/dev-reload.d5db60a8.js",
+      "hash": "d5db60a8"
     },
     {
       "logical": "vendor/htmx.min.js",
-      "dist": "assets/dist/vendor/htmx.min.28fae7bb.js",
-      "hash": "28fae7bb"
+      "dist": "assets/dist/vendor/htmx.min.e484d917.js",
+      "hash": "e484d917"
     },
     {
       "logical": "vendor/hx-sse.min.js",
-      "dist": "assets/dist/vendor/hx-sse.min.d3aeb710.js",
-      "hash": "d3aeb710"
+      "dist": "assets/dist/vendor/hx-sse.min.8a834680.js",
+      "hash": "8a834680"
     }
   ]
 }

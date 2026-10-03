@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 
 from pyganini import KitRouteDef as _KitRouteDef
 from pyganini import KitRouteMount as _KitRouteMount
+from pyganini import AdditionalPageSource as _AdditionalPageSource
+from pyganini._dispatch import AdditionalPagePlan as _SourcePlan
+from pyganini._dispatch import AdditionalPageRouter as _SourceRouter
 from pyganini import RouteErrorHandler as _RouteErrorHandler
 from pyganini import TemplateInspectionMode as _TemplateInspectionMode
 from pyganini._dispatch import build_endpoint as _build_endpoint
@@ -21,6 +24,7 @@ from pyganini._dispatch import select_creator as _select_creator
 from pyganini._dispatch import select_handler as _select_handler
 
 _template_names = ('mounts/analytics/customers/by_customer_id/report/page.jinja', 'mounts/analytics/page.jinja', 'mounts/customer_report/brief/page.jinja', 'mounts/customer_report/detailed/page.jinja', 'mounts/customer_report/layout.jinja', 'mounts/customer_report/page.jinja', 'routes/about/page.jinja', 'routes/layout.jinja', 'routes/main/hq/page.jinja', 'routes/main/hq/teams/by_team_id/customers/by_customer_id/page.jinja', 'routes/main/hq/teams/by_team_id/page.jinja', 'routes/main/page.jinja', 'routes/main/regional/offices/by_office_id/page.jinja', 'routes/main/regional/offices/by_office_id/teams/by_team_id/customers/by_customer_id/page.jinja', 'routes/main/regional/offices/by_office_id/teams/by_team_id/page.jinja', 'routes/main/regional/page.jinja', 'routes/main/reports/by_customer_id/page.jinja', 'routes/page.jinja')
+_source_template_names = ('routes/layout.jinja',)
 
 _route_0 = _load_route(
     module='app.routes.about.route',
@@ -556,6 +560,7 @@ def create_router(
     *,
     environment: _Environment | None = None,
     error_handler: _RouteErrorHandler | None = None,
+    additional_page_source: _AdditionalPageSource | None = None,
     template_inspection: _TemplateInspectionMode = _TemplateInspectionMode.OFF,
 ) -> _Router:
     selected_template_inspection = _prepare_template_inspection(
@@ -564,7 +569,10 @@ def create_router(
     )
     selected_environment = _prepare_environment(
         environment,
-        template_names=_template_names,
+        template_names=(
+            _template_names if additional_page_source is None
+            else (*_template_names, *_source_template_names)
+        ),
         source_path='app/_pyganini/asgi.py',
     )
     selected_error_handler = _prepare_route_error_handler(
@@ -1153,6 +1161,71 @@ def create_router(
                 error_templates=(None, None),
             ),
     ]
+    if additional_page_source is not None:
+        _source_plans = (
+            _SourcePlan(
+                prefix='/',
+                layouts=(('app/routes/layout.py', 1, 1, '/', ('routes/layout.jinja', 'app/routes/layout.jinja', 1, 1, None, None)),),
+                layout_markers=(('layout', 'additional-page', '/', 'routes/layout.jinja', 'app/routes/layout.jinja:1:1', 'none', 'app/routes/layout.py:1:1', 'none', 'none'),),
+                middleware=(),
+                chain=(),
+            ),
+            _SourcePlan(
+                prefix='/about',
+                layouts=(('app/routes/layout.py', 1, 1, '/', ('routes/layout.jinja', 'app/routes/layout.jinja', 1, 1, None, None)),),
+                layout_markers=(('layout', 'additional-page', '/', 'routes/layout.jinja', 'app/routes/layout.jinja:1:1', 'none', 'app/routes/layout.py:1:1', 'none', 'none'),),
+                middleware=(),
+                chain=(),
+            ),
+            _SourcePlan(
+                prefix='/main',
+                layouts=(('app/routes/layout.py', 1, 1, '/', ('routes/layout.jinja', 'app/routes/layout.jinja', 1, 1, None, None)),),
+                layout_markers=(('layout', 'additional-page', '/', 'routes/layout.jinja', 'app/routes/layout.jinja:1:1', 'none', 'app/routes/layout.py:1:1', 'none', 'none'),),
+                middleware=(),
+                chain=(),
+            ),
+            _SourcePlan(
+                prefix='/main/hq',
+                layouts=(('app/routes/layout.py', 1, 1, '/', ('routes/layout.jinja', 'app/routes/layout.jinja', 1, 1, None, None)),),
+                layout_markers=(('layout', 'additional-page', '/', 'routes/layout.jinja', 'app/routes/layout.jinja:1:1', 'none', 'app/routes/layout.py:1:1', 'none', 'none'),),
+                middleware=(),
+                chain=(),
+            ),
+            _SourcePlan(
+                prefix='/main/hq/teams',
+                layouts=(('app/routes/layout.py', 1, 1, '/', ('routes/layout.jinja', 'app/routes/layout.jinja', 1, 1, None, None)),),
+                layout_markers=(('layout', 'additional-page', '/', 'routes/layout.jinja', 'app/routes/layout.jinja:1:1', 'none', 'app/routes/layout.py:1:1', 'none', 'none'),),
+                middleware=(),
+                chain=(),
+            ),
+            _SourcePlan(
+                prefix='/main/regional',
+                layouts=(('app/routes/layout.py', 1, 1, '/', ('routes/layout.jinja', 'app/routes/layout.jinja', 1, 1, None, None)),),
+                layout_markers=(('layout', 'additional-page', '/', 'routes/layout.jinja', 'app/routes/layout.jinja:1:1', 'none', 'app/routes/layout.py:1:1', 'none', 'none'),),
+                middleware=(),
+                chain=(),
+            ),
+            _SourcePlan(
+                prefix='/main/regional/offices',
+                layouts=(('app/routes/layout.py', 1, 1, '/', ('routes/layout.jinja', 'app/routes/layout.jinja', 1, 1, None, None)),),
+                layout_markers=(('layout', 'additional-page', '/', 'routes/layout.jinja', 'app/routes/layout.jinja:1:1', 'none', 'app/routes/layout.py:1:1', 'none', 'none'),),
+                middleware=(),
+                chain=(),
+            ),
+            _SourcePlan(
+                prefix='/main/reports',
+                layouts=(('app/routes/layout.py', 1, 1, '/', ('routes/layout.jinja', 'app/routes/layout.jinja', 1, 1, None, None)),),
+                layout_markers=(('layout', 'additional-page', '/', 'routes/layout.jinja', 'app/routes/layout.jinja:1:1', 'none', 'app/routes/layout.py:1:1', 'none', 'none'),),
+                middleware=(),
+                chain=(),
+            ),
+        )
+        return _SourceRouter(
+            routes=_generated_routes, source=additional_page_source,
+            plans=_source_plans, environment=selected_environment,
+            template_inspection=selected_template_inspection,
+            error_handler=selected_error_handler,
+        )
     if selected_error_handler is None:
         return _Router(
             routes=_generated_routes,

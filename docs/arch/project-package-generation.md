@@ -98,7 +98,7 @@ _config <- _paths <- _route_graph -> _declarations
 
 `_generation` receives validated paths and does not parse configuration or
 import the graph. `_paths` does not import generation. `pyganini.__init__` exports
-`ActionDef`, `Destination`, `FragmentResponse`, `FragmentRouteDef`,
+`ActionDef`, `AdditionalPage`, `AdditionalPageSource`, `Destination`, `FragmentResponse`, `FragmentRouteDef`,
 `FragmentRouteResponse`, `KitActionDef`, `KitFragmentRouteDef`, `KitRouteDef`,
 `KitRouteMount`, `MountRoute`, `NavTrail`, `NavTrailStep`, `Navigation`,
 `NavigationBack`, `NavigationCurrent`, `Page`, `PageMetadata`,

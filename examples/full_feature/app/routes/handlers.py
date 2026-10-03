@@ -45,6 +45,12 @@ def build_layout(request: Request, active_nav: str) -> dict[str, object]:
             if template_inspection is TemplateInspectionMode.OVERLAY
             else None
         ),
+        "dev_reload_script_url": (
+            assets.path("dev-reload.js", base_path=root_path)
+            if getattr(request.app.state, "dev_reload_enabled", False)
+            else None
+        ),
+        "dev_reload_events_url": f"{external_base_path}/_example/reload",
         "app_script_url": assets.path("app.js", base_path=root_path),
     }
 

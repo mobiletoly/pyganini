@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ metadata.title }}</title><meta name="description" content="{{ metadata.description }}">
+<link rel="stylesheet" href="{{ layout.stylesheet_url }}">{% if layout.dev_reload_script_url %}
+    <script src="{{ layout.dev_reload_script_url }}" data-events-url="{{ layout.dev_reload_events_url }}" defer></script>
+    {% endif %}
+</head>
+<body><nav><a href="{{ layout.urls.root.path }}">Pyganini Content</a>
+<a href="{{ layout.base }}/privacy">Privacy</a><a href="{{ layout.base }}/about">About</a></nav>
+<main data-layout="root">{{ child }}</main></body></html>

@@ -22,6 +22,8 @@ PACKAGE_FILES = {
     "pyganini/hx.py",
     "pyganini/_paths.py",
     "pyganini/_render.py",
+    "pyganini/_request_path.py",
+    "pyganini/content/__init__.py",
     "pyganini/_route_graph.py",
     "pyganini/_template_references.py",
     "pyganini/_url_binding.py",
@@ -105,7 +107,11 @@ def test_wheel_metadata_entry_point_and_contents(package_build: PackageBuild) ->
         "jinja2>=3.1.6,<4",
         "python-multipart>=0.0.32,<0.0.33",
         "starlette>=1.6.0,<1.7",
+        "markdown-it-py>=4.2.0,<5 ; extra == 'content'",
+        "mdit-py-plugins>=0.6.1,<0.7 ; extra == 'content'",
+        "linkify-it-py>=2.2.0,<3 ; extra == 'content'",
     ]
+    assert metadata.get_all("Provides-Extra") == ["content"]
     assert metadata["Description-Content-Type"] == "text/markdown"
 
     with zipfile.ZipFile(wheel) as archive:
@@ -131,6 +137,7 @@ def test_source_distribution_has_exact_project_boundary(
         if name.startswith(f"{root}src/pyganini/") and not name.endswith("/")
     } == {
         f"{root}src/pyganini/browser",
+        f"{root}src/pyganini/content",
         *(f"{root}src/{name}" for name in PACKAGE_FILES),
     }
     assert {

@@ -264,6 +264,28 @@ class Page:
 
 
 @dataclass(frozen=True, slots=True)
+class AdditionalPage:
+    """Trusted finished HTML supplied by an application-owned page source."""
+
+    body: str
+    metadata: PageMetadata = field(default_factory=PageMetadata)
+    layout: Mapping[str, object] = field(default_factory=_empty_object_mapping)
+    status_code: int = 200
+    headers: Mapping[str, str] = field(default_factory=_empty_headers)
+
+    def __post_init__(self) -> None:
+        if not isinstance(cast(object, self.body), str):
+            raise TypeError("body must be a string")
+        if not isinstance(cast(object, self.metadata), PageMetadata):
+            raise TypeError("metadata must be a PageMetadata")
+        object.__setattr__(
+            self, "layout", _mapping_copy(self.layout, field_name="layout")
+        )
+        object.__setattr__(self, "status_code", _validate_status(self.status_code))
+        object.__setattr__(self, "headers", _validate_headers(self.headers))
+
+
+@dataclass(frozen=True, slots=True)
 class FragmentResponse:
     """An immutable request to render one fragment without page layouts."""
 
@@ -424,6 +446,34 @@ def _render_page(
     )
     if mode is not TemplateInspectionMode.OFF and marker is not None:
         child = str(_marker_wrap(child, marker))
+    return _render_layouts(
+        environment,
+        child,
+        metadata,
+        layout,
+        layouts,
+        mode=mode,
+        layout_markers=layout_markers,
+        embedded_fragments=embedded_fragments,
+    )
+
+
+def _render_layouts(
+    environment: Environment,
+    child: str,
+    metadata: PageMetadata,
+    layout: Mapping[str, object],
+    layouts: tuple[LayoutEvidence, ...],
+    *,
+    mode: TemplateInspectionMode,
+    layout_markers: tuple[InspectionMarkerEvidence, ...],
+    embedded_fragments: tuple[EmbeddedFragmentEvidence, ...] = (),
+) -> str:
+    chain = " -> ".join(
+        f"{prefix} ({path}:{line}:{column})"
+        for path, line, column, prefix, _ in layouts
+    )
+    chain_detail = f"selected layout chain: {chain or '<none>'}"
     total = len(layouts)
     for reverse_index, layout_evidence in enumerate(reversed(layouts), start=1):
         marker_path, marker_line, marker_column, route_prefix, layout_template = (
@@ -453,8 +503,8 @@ def _render_page(
 
 def _render_response_sync(
     environment: Environment,
-    result: Page | FragmentResponse,
-    template: TemplateEvidence,
+    result: Page | FragmentResponse | AdditionalPage,
+    template: TemplateEvidence | None,
     layouts: tuple[LayoutEvidence, ...],
     template_inspection: object,
     marker: InspectionMarkerEvidence | None,
@@ -467,34 +517,50 @@ def _render_response_sync(
         layout_markers
     ) != len(layouts):
         raise ValueError("layout inspection facts disagree with selected layouts")
-    if isinstance(result, Page):
+    if isinstance(result, (Page, AdditionalPage)):
         if not isinstance(cast(object, result.metadata), PageMetadata):
             raise TypeError("metadata must be a PageMetadata")
         metadata = PageMetadata(
             title=result.metadata.title,
             description=result.metadata.description,
         )
-        context = cast(
-            Mapping[str, object], _mapping_copy(result.context, field_name="context")
-        )
         layout = cast(
             Mapping[str, object], _mapping_copy(result.layout, field_name="layout")
         )
         status_code = _validate_status(result.status_code)
         headers = dict(_validate_headers(result.headers))
-        content = _render_page(
-            environment,
-            context,
-            metadata,
-            layout,
-            template,
-            layouts,
-            mode=template_inspection,
-            marker=marker,
-            layout_markers=layout_markers,
-            embedded_fragments=embedded_fragments,
-        )
+        if isinstance(result, AdditionalPage):
+            if not isinstance(cast(object, result.body), str):
+                raise TypeError("body must be a string")
+            content = _render_layouts(
+                environment,
+                result.body,
+                metadata,
+                layout,
+                layouts,
+                mode=template_inspection,
+                layout_markers=layout_markers,
+            )
+        else:
+            assert template is not None
+            context = cast(
+                Mapping[str, object],
+                _mapping_copy(result.context, field_name="context"),
+            )
+            content = _render_page(
+                environment,
+                context,
+                metadata,
+                layout,
+                template,
+                layouts,
+                mode=template_inspection,
+                marker=marker,
+                layout_markers=layout_markers,
+                embedded_fragments=embedded_fragments,
+            )
     else:
+        assert template is not None
         context = cast(
             Mapping[str, object], _mapping_copy(result.context, field_name="context")
         )
@@ -516,8 +582,8 @@ def _render_response_sync(
 async def render_response(
     *,
     environment: Environment,
-    result: Page | FragmentResponse,
-    template: TemplateEvidence,
+    result: Page | FragmentResponse | AdditionalPage,
+    template: TemplateEvidence | None,
     layouts: tuple[LayoutEvidence, ...],
     template_inspection: TemplateInspectionMode = TemplateInspectionMode.OFF,
     marker: InspectionMarkerEvidence | None = None,

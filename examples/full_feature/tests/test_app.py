@@ -139,7 +139,11 @@ def test_pages_layouts_dynamic_routes_and_asset_ownership(
         "public, max-age=31536000, immutable"
     )
     assert "pyganiniJs" in app_script.text
-    assert "noSwap" in app_script.text
+    assert "noSwap" not in app_script.text
+    assert "hx-headers:inherited=" in users.text
+    assert 'hx-status:422="swap:outerHTML"' in users.text
+    assert 'hx-status:4xx="swap:none"' in users.text
+    assert 'hx-status:5xx="swap:none"' in users.text
     assert "responseHandling" not in app_script.text
     assert client.get("/assets/missing.js").status_code == 404
     assert "cache-control" not in client.get("/assets/missing.js").headers

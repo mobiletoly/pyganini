@@ -407,3 +407,11 @@ matching, projection, encoding, and stdout failures use the
 1, write no partial output, and print no traceback. The command does not read
 or inspect `app/_pyganini`, import application modules, load Jinja, construct a
 Request or Router, execute handlers, or write files.
+
+## Content source boundaries
+
+Content entries are external runtime input and never appear in route inventory,
+URL helpers, or render-unit enumeration. Generate/check validates static layout
+and middleware evidence from the live tree. An application owns its check-only
+content command by calling `content.check(Path(...))`; Pyganini adds no content
+CLI discovery. See [Content pages](content-pages.md).

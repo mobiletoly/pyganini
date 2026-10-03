@@ -29,6 +29,7 @@ one filesystem route tree.
 - Route packages keep handlers, templates, layouts, and middleware together.
 - Generation produces a deterministic Starlette router and typed URL helpers.
 - `pyganini check` catches stale generated files and invalid route source.
+- Optional trusted HTML and Markdown pages share static layouts on router misses.
 - Jinja stays focused on HTML, including visible `hx-*` attributes.
 - Your application owns its server, middleware, sessions, persistence, and
   deployment policy.
@@ -270,6 +271,8 @@ in an AnyIO worker thread.
 
 - [Full-feature contact directory](examples/full_feature) combines the public
   route, rendering, navigation, HTMX, asset, SSE, browser, and error surfaces.
+- [Content pages](examples/content_pages) serves trusted HTML and nested Markdown
+  through generated miss handling with static layouts and middleware.
 - [Chat](examples/chat) connects generated form actions to an application-owned
   SSE room with replay, heartbeats, named HTML events, and subscriber cleanup.
 - [Kit route mounts](examples/kit_routes) mounts one reusable reports subtree
@@ -302,6 +305,9 @@ in an AnyIO worker thread.
   error-render evidence.
 - [Routes](docs/user/routes.md) covers live route packages, declarations, path
   mapping, layouts, and static validation.
+- [Development](docs/user/development.md) covers app-owned refresh and restart workflows.
+- [Content pages](docs/user/content-pages.md) covers trusted HTML and Markdown, live reads,
+  additional page sources, static ancestry, and packaged-resource lifetime.
 - [Route middleware](docs/user/middleware.md) covers live route-tree middleware,
   ordering, mounted-owner scope, diagnostics, and host boundaries.
 - [Error composition](docs/user/errors.md) covers the optional generated-route

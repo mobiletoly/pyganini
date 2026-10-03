@@ -25,40 +25,36 @@ server command.
 
 ### Application development loop
 
-The example also owns a fixed development loop for macOS and Linux:
+The example owns a development loop for macOS and Linux:
 
 ```text
-uv run --locked --python 3.14 python dev.py [--host HOST] [--port PORT]
+uv run --locked --python 3.14 python dev.py [--host HOST] [--port PORT] [--reload-path PATH]
 ```
 
-The defaults are `127.0.0.1` and `8000`. The command derives this example's
-root from `dev.py`, runs `pyganini generate` followed by `pyganini check`, and only
-then starts the fixed `app.main:app` Uvicorn process. It watches Python files
-recursively under `app/` while excluding the exact `app/_pyganini/` generated
-tree, plus every non-directory change below `assets/build`. It ignores
-`assets/dist`, `assets/.pyganini`, and the generated asset module. One coalesced
-Python or asset change set causes one generation/check preparation and, when
-successful, one server replacement. A Python or asset edit restarts the server
-even when generation writes no bytes. Before preparation it prints the resolved
-application root, server URL, both watch scopes, generated/output exclusions,
-and the manual-refresh policy; it prints these lines even when preparation
-fails.
+Defaults are `127.0.0.1` and `8000`. The explicit wrapper selects this example
+root and `app.main:create_development_app`. Shared repository example tooling
+in `../dev_support.py` runs `pyganini generate` and `pyganini check` before
+starting Uvicorn. Python under `app/` and final files under `assets/build`
+require successful preparation before replacement; failed preparation retains
+the current server and emits no browser refresh.
 
-Generation and check run while a working server remains alive. If either
-fails, the current server is retained and the loop waits for another Python
-edit. If Uvicorn exits, the loop reports the exit once, reaps it, and waits for
-the next Python edit; it does not retry on a timer. Ctrl-C and SIGTERM stop and
-reap the server process group with graceful signal escalation.
+Existing Jinja templates and the default external `content/` tree are watched
+for refresh only. Save an HTML/Markdown body or metadata, add a nested page, or
+repair an invalid save: the browser refreshes without generation or a server
+restart. Repeat `--reload-path` for another ordinary, disjoint file/directory,
+relative to this example or absolute. Repeating `content` is harmless. Generated
+products, output assets, caches, and temporary editor files are ignored.
 
-Jinja template content is not watched. The default Jinja environment checks
-template changes at request time, so refresh the browser manually to see
-template changes. Template content does not require `pyganini generate`; a
-template name or route declaration change is Python and does trigger
-generation. Deleting or renaming a template without updating Python may fail
-on the next request and is not proactively validated. The loop does not
-provide browser reload, proxying, asset building, deployment policy, Windows
-supervision, or arbitrary commands. Pyganini core owns no server or reload
-command.
+Only the development factory mounts `/_example/reload` and visibly includes a
+fingerprinted app-owned EventSource script. Production `create_app` exposes
+neither endpoint nor script, including when the development environment variable
+is present. Ctrl-C or SIGTERM stops and reaps the process group and removes the
+temporary revision file. An unexpected child exit waits for a Python edit.
+
+See [development](../../docs/user/development.md) for path validation, mixed
+batches, failure/reconnect behavior, packaged content, and POSIX limitations.
+Asset compilation remains a separate application tool. Pyganini core owns no
+server or reload command.
 
 ## Product routes
 
@@ -306,9 +302,9 @@ documented `app.main:app` launch command remains root-mounted.
 
 ## Local HTMX assets
 
-The application vendors `htmx.org` `4.0.0-beta6` core and `hx-sse` extension
+The application vendors `htmx.org` `4.0.0` core and `hx-sse` extension
 from their
-[versioned distribution](https://cdn.jsdelivr.net/npm/htmx.org@4.0.0-beta6/dist/)
+[versioned distribution](https://cdn.jsdelivr.net/npm/htmx.org@4.0.0/dist/)
 under `assets/build/vendor`; Pyganini projects both to fingerprinted
 `assets/dist` paths. The application makes no browser-time request to a CDN.
 
@@ -321,3 +317,14 @@ development server, database persistence, or production deployment policy.
 Pyganini fingerprints final build files but does not compile, bundle, or optimize
 them. Pyganini's optional CSRF helper does not own those application policies.
 Those behaviors remain application-owned or outside this example's scope.
+
+## Trusted content pages
+
+`/privacy`, `/privacy/part-one`, and `/about` read first-party HTML or Markdown
+from the external `content/` tree. The factory explicitly wraps `pages.resolve`
+with `build_layout(request, "")` so content receives the application shell
+without inferred navigation. Saves and new pages are visible on the next request
+without route generation. The explicit development loop refreshes the browser.
+The existing error
+callback owns failed live-save presentation. See the
+[content guide](../../docs/user/content-pages.md).

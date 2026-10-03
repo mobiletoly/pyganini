@@ -1,0 +1,15 @@
+{
+  "schema": "pyganini.assets-state.v1",
+  "managed": [
+    {
+      "logical": "app.css",
+      "dist": "assets/dist/app.485b7203.css",
+      "hash": "485b7203"
+    },
+    {
+      "logical": "dev-reload.js",
+      "dist": "assets/dist/dev-reload.d5db60a8.js",
+      "hash": "d5db60a8"
+    }
+  ]
+}

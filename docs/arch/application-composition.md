@@ -54,8 +54,10 @@ Each `create_router()` constructs fresh Route objects and fresh middleware
 instances. Starlette performs the normal request entry and reverse response
 unwind. A route middleware short-circuit therefore occurs before Pyganini path
 evidence validation, navigation, creators, request-data capture, handlers,
-rendering, and background work. Route middleware does not wrap unmatched 404 or
-method-mismatched 405 outcomes.
+rendering, and background work. Method-mismatched 405 outcomes bypass route
+middleware. Nil-source routers also bypass it for unmatched 404 outcomes. A
+configured additional page source uses graph-derived static live ancestry
+around resolution, writing, and declined 404 handling; see [Content](content.md).
 
 ## Host boundaries
 
@@ -84,8 +86,9 @@ retains the existing behavior.
 
 The error boundary is outside the matched route middleware chain, so it can
 present a route middleware failure. It does not wrap host routes, static files,
-outer middleware, lifespan, or deployment, and 404 and 405 still do not enter
-route-tree middleware. A handled HTTP exception preserves its status and
+outer middleware, lifespan, or deployment. Source error presentation occurs
+inside selected static middleware and uses live root error layouts. Generated
+405 outcomes remain outside route-tree middleware. A handled HTTP exception preserves its status and
 headers. A handled non-HTTP exception must send one 500 response before
 re-raising the original exception; an exception after response start bypasses
 the callback. Callback failures propagate without recursion.
@@ -113,3 +116,12 @@ development router with a typed inspection mode, mount `pyganini.browser` at an
 application-chosen prefix, and include the inspector script visibly. The host
 owns configuration, URL binding through decoded `root_path`, CSP,
 authentication, and deployment exposure.
+
+## Example development hosts
+
+Full-feature and content examples opt into their own revision SSE endpoint and
+visible EventSource script through explicit development factories. Shared
+`examples/dev_support.py` owns POSIX supervision, disjoint refresh paths, and a
+temporary revision file. This is repository example tooling; the package,
+generated graph, and production hosts have no development lifecycle hook.
+See [development](../user/development.md).

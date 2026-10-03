@@ -51,5 +51,5 @@ uv run pyganini check
 ```
 
 The application serves its fingerprinted CSS and vendored HTMX runtime from
-`assets/dist`. It vendors `htmx.org` `4.0.0-beta6` from the package's
-[versioned distribution](https://cdn.jsdelivr.net/npm/htmx.org@4.0.0-beta6/dist/htmx.min.js).
+`assets/dist`. It vendors `htmx.org` `4.0.0` from the package's
+[versioned distribution](https://cdn.jsdelivr.net/npm/htmx.org@4.0.0/dist/htmx.min.js).

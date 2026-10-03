@@ -446,7 +446,7 @@
       buttons.off.setAttribute("aria-pressed", visibility === "off" ? "true" : "false");
       buttons.next.setAttribute("aria-pressed", selectedStart ? "true" : "false");
     }
-    ["load", "resize", "htmx:afterSwap", "htmx:afterSettle"].forEach(function (name) {
+    ["load", "resize", "htmx:after:swap", "htmx:after:settle"].forEach(function (name) {
       listen(window, name, schedule);
     });
     listen(document, "scroll", schedule, true);

@@ -58,3 +58,11 @@ an owned `RouteErrorHandler` to `create_router(error_handler=...)`; see
 host-owned.
 
 The package contains inline type information and ships `pyganini/py.typed`.
+
+## Optional content dependencies
+
+Install `pyganini[content]` for trusted HTML/Markdown sources. The extra adds
+markdown-it-py 4, mdit-py-plugins 0.6, and linkify-it-py 2. Core imports and
+generated routers do not load these packages. An explicit content import
+without the extra explains the required installation. See
+[Content pages](content-pages.md) for application-owned startup and resources.

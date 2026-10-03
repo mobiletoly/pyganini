@@ -52,11 +52,12 @@ def test_q010_runs_source_and_consumer_typing_lanes_separately(
 
     assert commands == [
         ["uv", "lock", "--check"],
-        ["uv", "sync", "--locked", "--all-groups", "--python", "3.14"],
+        ["uv", "sync", "--locked", "--all-groups", "--all-extras", "--python", "3.14"],
         [
             "uv",
             "run",
             "--locked",
+            "--all-extras",
             "--python",
             "3.14",
             "ruff",
@@ -64,25 +65,56 @@ def test_q010_runs_source_and_consumer_typing_lanes_separately(
             "--check",
             ".",
         ],
-        ["uv", "run", "--locked", "--python", "3.14", "ruff", "check", "."],
-        ["uv", "run", "--locked", "--python", "3.14", "mypy", "src/pyganini"],
-        ["uv", "run", "--locked", "--python", "3.14", "pyright", "src/pyganini"],
         [
             "uv",
             "run",
             "--locked",
+            "--all-extras",
+            "--python",
+            "3.14",
+            "ruff",
+            "check",
+            ".",
+        ],
+        [
+            "uv",
+            "run",
+            "--locked",
+            "--all-extras",
+            "--python",
+            "3.14",
+            "mypy",
+            "src/pyganini",
+        ],
+        [
+            "uv",
+            "run",
+            "--locked",
+            "--all-extras",
+            "--python",
+            "3.14",
+            "pyright",
+            "src/pyganini",
+        ],
+        [
+            "uv",
+            "run",
+            "--locked",
+            "--all-extras",
             "--python",
             "3.14",
             "pytest",
             "-q",
             "tests/test_csrf_typing.py",
             "tests/test_sse_typing.py",
+            "tests/test_content_typing.py",
             "tests/test_assets.py::test_generated_asset_consumers_are_checked_by_both_type_checkers",
         ],
         [
             "uv",
             "run",
             "--locked",
+            "--all-extras",
             "--python",
             "3.14",
             "pytest",
@@ -644,3 +676,27 @@ def test_cleanup_failure_retains_primary_infrastructure_error(
         mirror_cleanup(tmp_path),
     ):
         raise InfrastructureFailure("browser startup failed")
+
+
+def test_q011_qualifies_optional_content_on_supported_python(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    commands: list[list[str | Path]] = []
+
+    @contextmanager
+    def no_cleanup(_: Path) -> Generator[None]:
+        yield
+
+    def record_run(
+        command: list[str | Path], **_: object
+    ) -> subprocess.CompletedProcess[bytes]:
+        commands.append(command)
+        return subprocess.CompletedProcess(command, 0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr(worker_module, "mirror_cleanup", no_cleanup)
+    monkeypatch.setattr(worker_module, "_run", record_run)
+    q011 = getattr(worker_module, "_q" + "011")
+    q011(argparse.Namespace(candidate_root=tmp_path))
+    assert len(commands) == 2
+    assert all("--all-extras" in command for command in commands)
+    assert all("3.13" in command for command in commands)

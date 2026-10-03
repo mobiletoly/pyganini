@@ -146,9 +146,11 @@ before a root mount. The host owns lifespan, middleware, exception handling,
 state, ASGI server, and deployment.
 
 Live route middleware is application code selected by the route tree. It runs
-only after a generated path and method match, uses the original Starlette
-`Request`, and does not wrap static files, generated 404 or 405 responses, or
-outer host failures. See [route middleware](middleware.md) for its ordering,
+after a generated path and method match, or around a configured additional
+page source using static live ancestry. It uses the original Starlette
+`Request`; static files, 405 responses, and outer host failures stay outside it.
+Without a source, unmatched 404 outcomes also bypass route middleware. See
+[route middleware](middleware.md) for its ordering,
 diagnostics, and ownership boundaries. Generated-route error composition is
 optional application code; host routes, static files, and outer failures stay
 outside it.
@@ -159,3 +161,9 @@ application-owned host.
 The installed `pyganini.browser` package contains the two fixed helper resources.
 They are not application assets or generated products. Applications mount the
 fixed-resource app and expose either URL explicitly.
+
+External authored content belongs outside `app/`, commonly under `content/`.
+Only explicit application composition connects it to the generated miss branch.
+It creates no route package, endpoint, URL helper, or navigation identity.
+Packaged data belongs in a separate application-owned data package. See
+[Content pages](content-pages.md).

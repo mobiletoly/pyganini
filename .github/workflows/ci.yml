@@ -32,29 +32,30 @@ jobs:
         run: uv lock --check
 
       - name: Install development dependencies
-        run: uv sync --locked --all-groups --python 3.14
+        run: uv sync --locked --all-groups --all-extras --python 3.14
 
       - name: Check formatting
-        run: uv run --locked --python 3.14 ruff format --check .
+        run: uv run --locked --all-extras --python 3.14 ruff format --check .
 
       - name: Lint
-        run: uv run --locked --python 3.14 ruff check .
+        run: uv run --locked --all-extras --python 3.14 ruff check .
 
       - name: Check framework typing with mypy
-        run: uv run --locked --python 3.14 mypy src/pyganini
+        run: uv run --locked --all-extras --python 3.14 mypy src/pyganini
 
       - name: Check framework typing with Pyright
-        run: uv run --locked --python 3.14 pyright src/pyganini
+        run: uv run --locked --all-extras --python 3.14 pyright src/pyganini
 
       - name: Check public consumer typing
         run: >-
-          uv run --locked --python 3.14 pytest -q
+          uv run --locked --all-extras --python 3.14 pytest -q
           tests/test_csrf_typing.py
           tests/test_sse_typing.py
+          tests/test_content_typing.py
           tests/test_assets.py::test_generated_asset_consumers_are_checked_by_both_type_checkers
 
       - name: Run the test suite
-        run: uv run --locked --python 3.14 pytest
+        run: uv run --locked --all-extras --python 3.14 pytest
 
   compatibility:
     name: Python 3.13 compatibility
@@ -75,10 +76,10 @@ jobs:
         run: uv python install 3.13
 
       - name: Install development dependencies
-        run: uv sync --locked --all-groups --python 3.13
+        run: uv sync --locked --all-groups --all-extras --python 3.13
 
       - name: Run the test suite
-        run: uv run --locked --python 3.13 pytest
+        run: uv run --locked --all-extras --python 3.13 pytest
 
   server-examples:
     name: ${{ matrix.example }} example on Python ${{ matrix.python-version }}
@@ -86,7 +87,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        example: ["chat", "kit_routes", "navigation"]
+        example: ["chat", "kit_routes", "navigation", "content_pages", "full_feature"]
         python-version: ["3.13", "3.14"]
     defaults:
       run:
@@ -131,7 +132,23 @@ jobs:
           uv run --locked --python ${{ matrix.python-version }}
           pyright app tests
 
+      - name: Check shared example tooling
+        if: matrix.example == 'content_pages' || matrix.example == 'full_feature'
+        run: |
+          uv run --locked --python ${{ matrix.python-version }} mypy dev.py ../dev_support.py ../authoring_test_support.py
+          uv run --locked --python ${{ matrix.python-version }} pyright dev.py ../dev_support.py ../authoring_test_support.py
+
+      - name: Install example browser
+        if: matrix.example == 'chat' || matrix.example == 'content_pages' || matrix.example == 'full_feature'
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: .playwright
+        run: >-
+          uv run --locked --python ${{ matrix.python-version }}
+          playwright install --with-deps chromium
+
       - name: Run example tests
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: .playwright
         run: >-
           uv run --locked --python ${{ matrix.python-version }}
           pytest

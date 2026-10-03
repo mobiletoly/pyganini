@@ -753,6 +753,8 @@ def test_route_accepts_method_distinctions_and_handler_values_without_inspection
 def test_public_exports_annotations_and_docstrings_are_exact() -> None:
     expected = {
         "ActionDef",
+        "AdditionalPage",
+        "AdditionalPageSource",
         "Destination",
         "FragmentResponse",
         "FragmentRouteDef",
@@ -798,7 +800,8 @@ def test_public_exports_annotations_and_docstrings_are_exact() -> None:
     }
     assert set(pyganini.__all__) == expected
     assert {name for name in vars(pyganini) if not name.startswith("_")} == (
-        expected | {"request_data"}
+        expected
+        | {name for name in ("request_data", "content") if name in vars(pyganini)}
     )
     assert (
         importlib.import_module("pyganini.request_data")

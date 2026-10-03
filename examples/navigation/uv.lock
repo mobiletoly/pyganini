@@ -528,9 +528,13 @@ dependencies = [
 requires-dist = [
     { name = "anyio", specifier = ">=4.14.2,<4.15" },
     { name = "jinja2", specifier = ">=3.1.6,<4" },
+    { name = "linkify-it-py", marker = "extra == 'content'", specifier = ">=2.2.0,<3" },
+    { name = "markdown-it-py", marker = "extra == 'content'", specifier = ">=4.2.0,<5" },
+    { name = "mdit-py-plugins", marker = "extra == 'content'", specifier = ">=0.6.1,<0.7" },
     { name = "python-multipart", specifier = ">=0.0.32,<0.0.33" },
     { name = "starlette", specifier = ">=1.6.0,<1.7" },
 ]
+provides-extras = ["content"]
 
 [package.metadata.requires-dev]
 dev = [

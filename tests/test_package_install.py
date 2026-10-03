@@ -55,7 +55,9 @@ def _smoke_install(
             str(python),
             "-c",
             (
-                "import pyganini; "
+                "import pyganini, sys, importlib.util; "
+                "assert 'pyganini.content' not in sys.modules; "
+                "assert importlib.util.find_spec('markdown_it') is None; "
                 "from pyganini.request_data import (Body, Form, Upload, "
                 "capture_body, capture_form); "
                 "assert Body(b'body').content == b'body'; "
@@ -64,7 +66,8 @@ def _smoke_install(
                 "assert capture_body(max_bytes=1).max_bytes == 1; "
                 "assert capture_form(max_files=1, max_fields=1, "
                 "max_part_size=1, max_upload_size=1).max_upload_size == 1; "
-                "from pyganini import (ActionDef, Destination, FragmentResponse, "
+                "from pyganini import (AdditionalPage, AdditionalPageSource, "
+                "ActionDef, Destination, FragmentResponse, "
                 "FragmentRouteDef, "
                 "FragmentRouteResponse, Page, PageMetadata, PageRouteResponse, "
                 "KitActionDef, KitFragmentRouteDef, KitRouteDef, "
@@ -80,7 +83,8 @@ def _smoke_install(
                 "route_kit, to); "
                 "from importlib.metadata import entry_points, requires; "
                 "assert set(pyganini.__all__) == "
-                "{'ActionDef', 'Destination', 'FragmentResponse', 'FragmentRouteDef', "
+                "{'AdditionalPage', 'AdditionalPageSource', 'ActionDef', "
+                "'Destination', 'FragmentResponse', 'FragmentRouteDef', "
                 "'FragmentRouteResponse', 'KitActionDef', 'KitFragmentRouteDef', "
                 "'KitRouteDef', 'KitRouteMount', 'MountRoute', 'NavTrail', "
                 "'NavTrailStep', 'Navigation', 'NavigationBack', "
@@ -130,11 +134,11 @@ def _smoke_install(
                 "helper_bytes=importlib.resources.files('pyganini.browser').joinpath("
                 "'pyganini-sse-event.js').read_bytes(); "
                 "assert hashlib.sha256(helper_bytes).hexdigest() == "
-                "'beaea931c38ac5c67f07ebe787bccd96ec4a7a0f85176103a58f41370de24941'; "
+                "'ef961ea2bfb7b57ee2acc40a8ae0f7469a40bf02be4c25933bf2463433afb8cf'; "
                 "inspector_bytes=importlib.resources.files('pyganini.browser').joinpath("
                 "'pyganini-template-inspector.js').read_bytes(); "
                 "assert hashlib.sha256(inspector_bytes).hexdigest() == "
-                "'8229d016bc7d4b2f74acab19fa75019a83cd0128988302ca1ccc53c803daba59'; "
+                "'25e3c2051abd5576fd17ae70cd436b099f4c04b5f2248c08bf5eb7a5b8e40304'; "
                 "assert hx.HEADER_RETARGET == 'HX-Retarget'; "
                 "from pyganini.csrf import Guard; "
                 "assert csrf.DEFAULT_COOKIE_NAME == 'pyganini_csrf'; "
@@ -525,7 +529,7 @@ def _smoke_install(
                 "assert helper[0]['status']==200\n"
                 "helper_headers=dict(helper[0]['headers'])\n"
                 "assert helper_headers[b'etag']=="
-                "b'\"beaea931c38ac5c67f07ebe787bccd96ec4a7a0f85176103a58f41370de24941\"'\n"
+                "b'\"ef961ea2bfb7b57ee2acc40a8ae0f7469a40bf02be4c25933bf2463433afb8cf\"'\n"
                 "assert body(helper)==helper_bytes\n"
                 "inspector_bytes=files('pyganini.browser').joinpath("
                 "'pyganini-template-inspector.js').read_bytes()\n"
@@ -534,7 +538,7 @@ def _smoke_install(
                 "assert inspector[0]['status']==200\n"
                 "inspector_headers=dict(inspector[0]['headers'])\n"
                 "assert inspector_headers[b'etag']=="
-                "b'\"8229d016bc7d4b2f74acab19fa75019a83cd0128988302ca1ccc53c803daba59\"'\n"
+                "b'\"25e3c2051abd5576fd17ae70cd436b099f4c04b5f2248c08bf5eb7a5b8e40304\"'\n"
                 "assert body(inspector)==inspector_bytes\n"
                 "cached=asyncio.run(request(browser_host,'/helpers/pyganini-sse-event.js',"
                 "headers=[('if-none-match',helper_headers[b'etag'].decode())]))\n"
@@ -591,3 +595,78 @@ def test_external_sdist_built_wheel_install(
             python_line=python_line,
             root=Path(temporary),
         )
+
+
+@pytest.mark.parametrize("python_line", ["3.13", "3.14"])
+@pytest.mark.parametrize("artifact_name", ["wheel", "sdist_wheel"])
+def test_content_extra_and_packaged_data_outside_checkout(
+    package_build: PackageBuild, python_line: str, artifact_name: str
+) -> None:
+    artifact = getattr(package_build, artifact_name)
+    with tempfile.TemporaryDirectory(prefix="pyganini-content-install-") as temporary:
+        root = Path(temporary)
+        environment = os.environ.copy()
+        environment.pop("PYTHONPATH", None)
+        venv = root / "venv"
+        _run(
+            ["uv", "venv", "--python", python_line, str(venv)],
+            cwd=root,
+            environment=environment,
+        )
+        python = venv / "bin/python"
+        _run(
+            ["uv", "pip", "install", "--python", str(python), str(artifact)],
+            cwd=root,
+            environment=environment,
+        )
+        _run(
+            [
+                str(python),
+                "-c",
+                "import pyganini,sys; assert 'pyganini.content' n"
+                "ot in sys.modules\ntry:\n from pyganini import con"
+                "tent\nexcept ImportError as e:\n assert 'pyganini["
+                "content]' in str(e)\nelse:\n raise AssertionError("
+                "'content dependencies present in plain install')",
+            ],
+            cwd=root,
+            environment=environment,
+        )
+        _run(
+            [
+                "uv",
+                "pip",
+                "install",
+                "--python",
+                str(python),
+                str(artifact) + "[content]",
+            ],
+            cwd=root,
+            environment=environment,
+        )
+        # Application data travels independently of route code in a zip package.
+        import zipfile
+
+        archive = root / "data.zip"
+        with zipfile.ZipFile(archive, "w") as output:
+            output.writestr("site_data/__init__.py", "")
+            output.writestr(
+                "site_data/content/privacy/page.json", '{"title":"Packaged"}'
+            )
+            output.writestr(
+                "site_data/content/privacy/body.md", "# Packaged\n\nwww.example.com"
+            )
+        script = """import sys, importlib.resources
+from pyganini import AdditionalPage, content
+from starlette.requests import Request
+sys.path.insert(0, 'data.zip')
+resource = importlib.resources.files('site_data').joinpath('content')
+with importlib.resources.as_file(resource) as root:
+    pages = content.new(content.Config(root=root))
+    scope = {'type':'http','method':'GET','path':'/privacy','headers':[]}
+    response = pages.resolve(Request(scope))
+    assert isinstance(response, AdditionalPage)
+    assert 'id="packaged"' in response.body
+    assert 'http://www.example.com' in response.body
+"""
+        _run([str(python), "-c", script], cwd=root, environment=environment)

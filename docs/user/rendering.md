@@ -205,3 +205,12 @@ localized `PYGANINI019`; error-template and selected-layout failures retain
 Runtime inspection is off by default and preserves existing response bytes.
 See [Template inspection](template-inspection.md) for the typed modes and
 explicit component and embedded-fragment boundaries.
+
+## Additional page bodies
+
+An optional `create_router(additional_page_source=...)` callback can return an
+`AdditionalPage` containing trusted finished HTML and the same explicit
+metadata, layout mapping, status, and headers. It bypasses the page-template
+stage and uses eligible static live layouts through the same Jinja writer.
+It is never interpreted as Jinja source. Declared route and error aliases
+continue to exclude this source-only value. See [Content pages](content-pages.md).

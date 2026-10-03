@@ -8,8 +8,8 @@
     },
     {
       "logical": "vendor/htmx.min.js",
-      "dist": "assets/dist/vendor/htmx.min.28fae7bb.js",
-      "hash": "28fae7bb"
+      "dist": "assets/dist/vendor/htmx.min.e484d917.js",
+      "hash": "e484d917"
     }
   ]
 }

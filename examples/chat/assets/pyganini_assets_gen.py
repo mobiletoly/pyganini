@@ -29,15 +29,15 @@ _MANIFEST: dict[str, Asset] = {
     ),
     "vendor/htmx.min.js": Asset(
         name="vendor/htmx.min.js",
-        path="/assets/vendor/htmx.min.28fae7bb.js",
-        hash="28fae7bb",
-        size=36282,
+        path="/assets/vendor/htmx.min.e484d917.js",
+        hash="e484d917",
+        size=36716,
     ),
     "vendor/hx-sse.min.js": Asset(
         name="vendor/hx-sse.min.js",
-        path="/assets/vendor/hx-sse.min.d3aeb710.js",
-        hash="d3aeb710",
-        size=5489,
+        path="/assets/vendor/hx-sse.min.8a834680.js",
+        hash="8a834680",
+        size=6225,
     ),
 }
 

@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 test("Svelte island saves, unmounts for boosted navigation, and remounts", async ({
-  page,
+  page, baseURL,
 }) => {
   const externalRequests: string[] = [];
   page.on("request", (request) => {
-    if (new URL(request.url()).origin !== "http://127.0.0.1:8766") {
+    if (new URL(request.url()).origin !== new URL(baseURL!).origin) {
       externalRequests.push(request.url());
     }
   });

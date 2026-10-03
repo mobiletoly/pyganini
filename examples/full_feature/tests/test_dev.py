@@ -19,7 +19,8 @@ from typing import cast
 import pytest
 from watchfiles import Change
 
-import dev
+import dev as launcher
+from dev import _MODULE as dev  # explicit wrapper load precedes use
 
 
 def _config(tmp_path: Path) -> dev._Config:
@@ -74,7 +75,12 @@ def test_unsupported_platform_fails_before_running_loop(
         return False
 
     monkeypatch.setattr(dev, "_supported_platform", unsupported_platform)
-    assert dev.main([]) == 2
+    assert (
+        dev.main(
+            Path(__file__).resolve().parents[1], "app.main:create_development_app", []
+        )
+        == 2
+    )
 
 
 def test_config_uses_dev_file_when_invoked_from_another_cwd(
@@ -82,8 +88,13 @@ def test_config_uses_dev_file_when_invoked_from_another_cwd(
     tmp_path: Path,
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    config = dev._config("localhost", 8123)
-    assert config.root == Path(dev.__file__).resolve().parent
+    config = dev._config(
+        Path(__file__).resolve().parents[1],
+        "app.main:create_development_app",
+        "localhost",
+        8123,
+    )
+    assert config.root == Path(__file__).resolve().parents[1]
     assert config.watch_root == config.root / "app"
     assert config.asset_build_root == config.root / "assets" / "build"
     assert config.generated_root == config.root / "app" / "_pyganini"
@@ -208,7 +219,7 @@ def test_filter_accepts_python_and_final_asset_build_files(
     assert dev._watch_filter(config, Change.modified, str(source)) is True
     assert dev._watch_filter(config, Change.added, str(other_source)) is True
     assert dev._watch_filter(config, Change.modified, str(generated_source)) is False
-    assert dev._watch_filter(config, Change.modified, str(template)) is False
+    assert dev._watch_filter(config, Change.modified, str(template)) is True
     assert dev._watch_filter(config, Change.modified, str(directory)) is False
     assert dev._watch_filter(config, Change.modified, str(asset)) is True
     assert dev._watch_filter(config, Change.modified, str(asset_output)) is False
@@ -604,22 +615,10 @@ def test_run_loop_reports_initial_state_before_failed_preparation(
     launcher_lines = [
         line
         for line in capsys.readouterr().out.splitlines()
-        if line.startswith("[full-feature-dev]")
+        if line.startswith("[example-dev]")
     ]
-    assert launcher_lines[:4] == [
-        f"[full-feature-dev] application root: {config.root}",
-        "[full-feature-dev] server URL: http://127.0.0.1:8000",
-        (
-            f"[full-feature-dev] watch scope: {config.watch_root} (recursive "
-            f"Python files; generated root excluded: {config.generated_root}); "
-            f"{config.asset_build_root} (all final build files; asset output "
-            f"excluded: {config.asset_output_root})"
-        ),
-        (
-            "[full-feature-dev] manual refresh: Jinja templates reload on request; "
-            "asset changes restart the server; refresh the browser"
-        ),
-    ]
+    assert launcher_lines[0] == f"[example-dev] application root: {config.root}"
+    assert "refresh-only:" in launcher_lines[3]
 
 
 class _FakeChild:
@@ -653,7 +652,7 @@ def _fake_server(child: _FakeChild) -> dev._Server:
 
 
 def _copy_example_config(tmp_path: Path) -> dev._Config:
-    source = Path(dev.__file__).resolve().parent
+    source = Path(__file__).resolve().parents[1]
     root = tmp_path / "example-copy"
     shutil.copytree(
         source,
@@ -1044,6 +1043,7 @@ def test_exited_child_is_reported_once_without_crash_loop(
     config = _config(tmp_path)
     server = _fake_server(_FakeChild(exit_code=3))
     starts = 0
+    stopped: list[dev._Server] = []
 
     def fake_prepare(
         _config: dev._Config, *, server_alive: bool, initial: bool = False
@@ -1061,10 +1061,156 @@ def test_exited_child_is_reported_once_without_crash_loop(
         yield set()
         raise dev._ShutdownRequested
 
+    def reject_group_signal(_group: int, _signal: int) -> bool:
+        raise AssertionError("fake-child tests must not signal a real process group")
+
+    def fake_stop(selected: dev._Server, _config: dev._Config) -> bool:
+        stopped.append(selected)
+        return True
+
     monkeypatch.setattr(dev, "_prepare", fake_prepare)
     monkeypatch.setattr(dev, "_start_server", fake_start)
     monkeypatch.setattr(dev, "_watch", fake_watch)
+    monkeypatch.setattr(dev, "_send_group_signal", reject_group_signal)
+    monkeypatch.setattr(dev, "_stop_server", fake_stop)
 
     assert dev._run_loop(config) == 0
     assert starts == 1
+    assert stopped == [server]
     assert capsys.readouterr().out.count("unexpected child exit") == 1
+
+
+def test_jinja_edit_is_a_refresh_event(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    template = config.watch_root / "page.jinja"
+    template.write_text("<p>Changed</p>")
+    assert dev._watch_filter(config, Change.modified, str(template)) is True
+
+
+def test_wrapper_loads_the_exact_shared_owner() -> None:
+    assert launcher._MODULE is dev
+    assert Path(dev.__file__ or "").resolve() == launcher.ROOT.parent / "dev_support.py"
+
+
+def test_reload_configuration_disjoint_roots_and_exact_file_filter(
+    tmp_path: Path,
+) -> None:
+    config = _config(tmp_path)
+    content = config.root / "content"
+    content.mkdir()
+    external = tmp_path / "one.txt"
+    external.write_text("one")
+    paths = dev._reload_paths(config.root, ["content", str(external)])
+    assert paths == (content, external)
+    selected = replace(config, reload_roots=paths, reload_directories=(content,))
+    lookup = config.root / "assets/pyganini_assets_gen.py"
+    lookup.touch()
+    with pytest.raises(ValueError, match="disjoint"):
+        dev._reload_paths(config.root, [str(lookup)])
+    assert (
+        dev._accepted_path(
+            replace(selected, reload_roots=(*paths, lookup)), str(lookup)
+        )
+        is None
+    )
+    assert dev._accepted_path(selected, str(external)) == external
+    assert dev._accepted_path(selected, str(external.with_name("sibling.txt"))) is None
+    external.unlink()
+    assert dev._accepted_path(selected, str(external)) == external
+    for invalid in ["app", "assets/build", "assets/dist", ".", "missing"]:
+        with pytest.raises((ValueError, OSError)):
+            dev._reload_paths(config.root, [invalid])
+    nested = content / "nested"
+    nested.mkdir()
+    with pytest.raises(ValueError, match="disjoint"):
+        dev._reload_paths(config.root, [str(nested)])
+    link = tmp_path / "link"
+    link.symlink_to(content, target_is_directory=True)
+    with pytest.raises(ValueError, match="ordinary"):
+        dev._reload_paths(config.root, [str(link)])
+    special = content / "pipe"
+    os.mkfifo(special)
+    with pytest.raises(ValueError, match="special"):
+        dev._reload_paths(config.root, [])
+
+
+def test_refresh_paths_ignore_editor_and_cache_events(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    content = config.root / "content"
+    content.mkdir()
+    config = replace(config, reload_roots=(content,), reload_directories=(content,))
+    for name in ["page.json", "body.md", "nested/body.html"]:
+        path = content / name
+        assert dev._accepted_path(config, str(path)) == path
+        assert dev._restart_path(config, path) is False
+    for name in ["body.md~", ".#body.md", "__pycache__/body.md", "x.pyc", "x.pyo"]:
+        assert dev._accepted_path(config, str(content / name)) is None
+    assert dev._restart_path(config, config.watch_root / "route.py")
+    assert dev._restart_path(config, config.asset_build_root / "app.js")
+    assert not dev._restart_path(config, config.watch_root / "page.jinja")
+
+
+@pytest.mark.parametrize(
+    "mode", ["refresh", "mixed", "failed", "write-failed", "directory-deleted"]
+)
+def test_revision_publication_obeys_prepare_and_restart_gates(
+    mode: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = _config(tmp_path)
+    content = config.root / "content"
+    content.mkdir()
+    config = replace(config, reload_roots=(content,), reload_directories=(content,))
+    calls: list[str] = []
+    revision_paths: list[Path] = []
+    real_publish = dev._publish
+
+    def publish(path: Path, session: str, revision: int) -> None:
+        calls.append(f"publish:{revision}")
+        revision_paths.append(path)
+        if mode == "write-failed" and revision:
+            raise dev._RevisionError("revision publication failed")
+        real_publish(path, session, revision)
+        assert path.read_text() == f"{session}:{revision}"
+        assert not path.with_suffix(".tmp").exists()
+
+    def prepare(
+        _config: dev._Config, *, server_alive: bool, initial: bool = False
+    ) -> bool:
+        calls.append("prepare")
+        return initial or mode != "failed"
+
+    def start(_config: dev._Config) -> dev._Server:
+        assert _config.revision_file is not None
+        calls.append("start")
+        return _fake_server(_FakeChild())
+
+    def stop(_server: dev._Server, _config: dev._Config) -> bool:
+        calls.append("stop")
+        return True
+
+    def watch(_config: dev._Config) -> Iterator[set[tuple[Change, str]]]:
+        if mode == "directory-deleted":
+            content.rmdir()
+        paths = [content / "body.html", config.watch_root / "page.jinja"]
+        if mode in {"mixed", "failed"}:
+            paths.append(config.watch_root / "route.py")
+        yield _changes(*paths)
+        raise dev._ShutdownRequested
+
+    monkeypatch.setattr(dev, "_publish", publish)
+    monkeypatch.setattr(dev, "_prepare", prepare)
+    monkeypatch.setattr(dev, "_start_server", start)
+    monkeypatch.setattr(dev, "_stop_server", stop)
+    monkeypatch.setattr(dev, "_watch", watch)
+    assert dev._run_loop(config) == (
+        1 if mode in {"write-failed", "directory-deleted"} else 0
+    )
+    expected = ["publish:0", "prepare", "start"]
+    if mode == "mixed":
+        expected += ["prepare", "stop", "start", "publish:1"]
+    elif mode == "failed":
+        expected += ["prepare"]
+    elif mode != "directory-deleted":
+        expected += ["publish:1"]
+    assert calls == [*expected, "stop"]
+    assert all(not path.parent.exists() for path in revision_paths)

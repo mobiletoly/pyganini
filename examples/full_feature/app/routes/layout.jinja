@@ -13,13 +13,17 @@
     <script src="{{ layout.template_inspector_script_url }}" defer></script>
     {% endif %}
     <script src="{{ layout.app_script_url }}" defer></script>
-  </head>
+  {% if layout.dev_reload_script_url %}
+    <script src="{{ layout.dev_reload_script_url }}" data-events-url="{{ layout.dev_reload_events_url }}" defer></script>
+    {% endif %}
+</head>
   <body>
     <header data-layout="root">
       <nav aria-label="Primary navigation">
         <a href="{{ layout.urls.root.path }}">Pyganini Directory</a>
         <a href="{{ layout.urls.users.path }}"{% if layout.active_nav == "users" %} aria-current="page"{% endif %}>Contacts</a>
         <a href="{{ layout.urls.settings.path }}"{% if layout.active_nav == "settings" %} aria-current="page"{% endif %}>Settings</a>
+        <a href="{{ layout.urls.root.path }}privacy">Privacy</a>
       </nav>
     </header>
     <main id="page-content">{{ child }}</main>

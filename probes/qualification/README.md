@@ -33,14 +33,14 @@ Q010 runs root validation from the byte-verified disposable candidate mirror.
 Its strict source typing lane is:
 
 ```text
-uv run --locked --python 3.14 mypy src/pyganini
-uv run --locked --python 3.14 pyright src/pyganini
+uv run --locked --all-extras --python 3.14 mypy src/pyganini
+uv run --locked --all-extras --python 3.14 pyright src/pyganini
 ```
 
 Its public-consumer typing lane is:
 
 ```text
-uv run --locked --python 3.14 pytest -q tests/test_csrf_typing.py tests/test_sse_typing.py tests/test_assets.py::test_generated_asset_consumers_are_checked_by_both_type_checkers
+uv run --locked --all-extras --python 3.14 pytest -q tests/test_csrf_typing.py tests/test_sse_typing.py tests/test_content_typing.py tests/test_assets.py::test_generated_asset_consumers_are_checked_by_both_type_checkers
 ```
 
 The focused pytest owners require valid CSRF, SSE, and generated-asset
@@ -221,3 +221,12 @@ request-failure path, so a later path cannot conceal an earlier mutation. Any
 mutation becomes a product finding.
 It preserves pre-existing ignored content in the live Pyganini checkout because
 the runner never cleans the live repository.
+
+Q010 installs the candidate's optional content extra and checks its public
+content/source consumers alongside CSRF, SSE, and asset contracts. It retains
+the same qualification verdicts and report schema; dependency feasibility alone
+does not qualify source dispatch or example authoring.
+
+Q011 also uses `--all-extras` for its locked Python 3.13 sync/run so the full
+compatibility suite qualifies optional content. Plain-package installation
+continues to be tested independently in Q010.

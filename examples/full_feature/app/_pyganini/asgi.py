@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING as _TYPE_CHECKING
 
 from pyganini import KitRouteDef as _KitRouteDef
 from pyganini import KitRouteMount as _KitRouteMount
+from pyganini import AdditionalPageSource as _AdditionalPageSource
+from pyganini._dispatch import AdditionalPagePlan as _SourcePlan
+from pyganini._dispatch import AdditionalPageRouter as _SourceRouter
 from pyganini import RouteErrorHandler as _RouteErrorHandler
 from pyganini import TemplateInspectionMode as _TemplateInspectionMode
 from pyganini._dispatch import DispatchError as _DispatchError
@@ -24,6 +27,7 @@ from pyganini._dispatch import select_creator as _select_creator
 from pyganini._dispatch import select_handler as _select_handler
 
 _template_names = ('mounts/contact_directory/by_id/page.jinja', 'mounts/contact_directory/create/directory.jinja', 'mounts/contact_directory/layout.jinja', 'mounts/contact_directory/page.jinja', 'mounts/contact_directory/table.jinja', 'routes/error_fragment.jinja', 'routes/error_page.jinja', 'routes/layout.jinja', 'routes/page.jinja', 'routes/settings/page.jinja', 'routes/settings/users/layout.jinja', 'routes/users/layout.jinja')
+_source_template_names = ('routes/layout.jinja', 'routes/settings/users/layout.jinja', 'routes/users/layout.jinja')
 _error_rendering = (
     ('routes/error_page.jinja', 'app/routes/error_page.jinja', 1, 1, None, ('app/routes/route.py', 9, 25)),
     ('routes/error_fragment.jinja', 'app/routes/error_fragment.jinja', 1, 1, None, ('app/routes/route.py', 10, 29)),
@@ -271,6 +275,7 @@ def create_router(
     *,
     environment: _Environment | None = None,
     error_handler: _RouteErrorHandler | None = None,
+    additional_page_source: _AdditionalPageSource | None = None,
     template_inspection: _TemplateInspectionMode = _TemplateInspectionMode.OFF,
 ) -> _Router:
     selected_template_inspection = _prepare_template_inspection(
@@ -279,7 +284,10 @@ def create_router(
     )
     selected_environment = _prepare_environment(
         environment,
-        template_names=_template_names,
+        template_names=(
+            _template_names if additional_page_source is None
+            else (*_template_names, *_source_template_names)
+        ),
         source_path='app/_pyganini/asgi.py',
     )
     selected_error_handler = _prepare_route_error_handler(
@@ -671,6 +679,50 @@ def create_router(
             _generated_route_7,
             _generated_route_8,
     ]
+    if additional_page_source is not None:
+        _source_plans = (
+            _SourcePlan(
+                prefix='/',
+                layouts=(('app/routes/layout.py', 1, 1, '/', ('routes/layout.jinja', 'app/routes/layout.jinja', 1, 1, None, None)),),
+                layout_markers=(('layout', 'additional-page', '/', 'routes/layout.jinja', 'app/routes/layout.jinja:1:1', 'none', 'app/routes/layout.py:1:1', 'none', 'none'),),
+                middleware=(),
+                chain=(),
+            ),
+            _SourcePlan(
+                prefix='/problem',
+                layouts=(('app/routes/layout.py', 1, 1, '/', ('routes/layout.jinja', 'app/routes/layout.jinja', 1, 1, None, None)),),
+                layout_markers=(('layout', 'additional-page', '/', 'routes/layout.jinja', 'app/routes/layout.jinja:1:1', 'none', 'app/routes/layout.py:1:1', 'none', 'none'),),
+                middleware=(),
+                chain=(),
+            ),
+            _SourcePlan(
+                prefix='/settings',
+                layouts=(('app/routes/layout.py', 1, 1, '/', ('routes/layout.jinja', 'app/routes/layout.jinja', 1, 1, None, None)),),
+                layout_markers=(('layout', 'additional-page', '/', 'routes/layout.jinja', 'app/routes/layout.jinja:1:1', 'none', 'app/routes/layout.py:1:1', 'none', 'none'),),
+                middleware=(),
+                chain=(),
+            ),
+            _SourcePlan(
+                prefix='/settings/users',
+                layouts=(('app/routes/layout.py', 1, 1, '/', ('routes/layout.jinja', 'app/routes/layout.jinja', 1, 1, None, None)), ('app/routes/settings/users/layout.py', 1, 1, '/settings/users', ('routes/settings/users/layout.jinja', 'app/routes/settings/users/layout.jinja', 1, 1, None, None))),
+                layout_markers=(('layout', 'additional-page', '/', 'routes/layout.jinja', 'app/routes/layout.jinja:1:1', 'none', 'app/routes/layout.py:1:1', 'none', 'none'), ('layout', 'additional-page', '/settings/users', 'routes/settings/users/layout.jinja', 'app/routes/settings/users/layout.jinja:1:1', 'none', 'app/routes/settings/users/layout.py:1:1', 'none', 'none')),
+                middleware=(*_middleware_0,),
+                chain=(('app/routes/settings/users/middleware.py', 5, 1, '/settings/users', ((6, 5),)),),
+            ),
+            _SourcePlan(
+                prefix='/users',
+                layouts=(('app/routes/layout.py', 1, 1, '/', ('routes/layout.jinja', 'app/routes/layout.jinja', 1, 1, None, None)), ('app/routes/users/layout.py', 1, 1, '/users', ('routes/users/layout.jinja', 'app/routes/users/layout.jinja', 1, 1, None, None))),
+                layout_markers=(('layout', 'additional-page', '/', 'routes/layout.jinja', 'app/routes/layout.jinja:1:1', 'none', 'app/routes/layout.py:1:1', 'none', 'none'), ('layout', 'additional-page', '/users', 'routes/users/layout.jinja', 'app/routes/users/layout.jinja:1:1', 'none', 'app/routes/users/layout.py:1:1', 'none', 'none')),
+                middleware=(*_middleware_1,),
+                chain=(('app/routes/users/middleware.py', 5, 1, '/users', ((6, 5),)),),
+            ),
+        )
+        return _SourceRouter(
+            routes=_generated_routes, source=additional_page_source,
+            plans=_source_plans, environment=selected_environment,
+            template_inspection=selected_template_inspection,
+            error_handler=selected_error_handler,
+        )
     if selected_error_handler is None:
         return _Router(
             routes=_generated_routes,

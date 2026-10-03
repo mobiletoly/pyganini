@@ -165,3 +165,13 @@ The public handler aliases `PageRouteResponse`, `FragmentRouteResponse`, and
 `FragmentResponse | Response`, and `Page | FragmentResponse | Response`.
 They are typing-only aliases. Starlette remains the owner of concrete direct
 responses, and no duplicate Pyganini response classes are introduced.
+
+## Finished additional bodies
+
+`AdditionalPage` is a frozen source-only value with trusted HTML, metadata,
+layout mapping, status, and headers. Existing declared route/error aliases
+exclude it. `_render_page` and the source branch share `_render_layouts`; only
+the declared page path loads a page template. Additional bodies receive no fake
+page marker. Layout markers use their actual generated source evidence. All
+layout work remains strict synchronous Jinja in one buffered worker invocation.
+See [Content](content.md) for source dispatch and ownership.

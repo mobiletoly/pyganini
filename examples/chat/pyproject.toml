@@ -14,6 +14,7 @@ pyganini = { path = "../..", editable = true }
 
 [dependency-groups]
 test = [
+    "playwright==1.62.0",
     "httpx2==2.12.0",
     "pytest==9.1.1",
 ]

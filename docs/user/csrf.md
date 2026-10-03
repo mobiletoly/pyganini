@@ -65,7 +65,7 @@ For HTMX requests that do not submit a form field, put the plain JSON string
 on a visible inherited attribute:
 
 ```jinja
-<body hx-headers='{{ csrf.headers(csrf_token) }}'>
+<body hx-headers:inherited='{{ csrf.headers(csrf_token) }}'>
 ```
 
 Application-owned JavaScript may use visible meta markup and send the value in

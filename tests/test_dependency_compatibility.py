@@ -26,6 +26,9 @@ def test_declared_dependency_overlap_has_no_override() -> None:
         "jinja2>=3.1.6,<4",
         "python-multipart>=0.0.32,<0.0.33",
         "starlette>=1.6.0,<1.7",
+        "markdown-it-py>=4.2.0,<5 ; extra == 'content'",
+        "mdit-py-plugins>=0.6.1,<0.7 ; extra == 'content'",
+        "linkify-it-py>=2.2.0,<3 ; extra == 'content'",
     ]
 
     with Path("pyproject.toml").open("rb") as source:

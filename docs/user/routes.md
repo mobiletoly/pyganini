@@ -230,7 +230,8 @@ same generation pass.
 
 One normalized path becomes one Starlette route containing the accepted method
 union. A wrong method at a matched path returns 405 with the exact `Allow`
-member set. OPTIONS is not implicit. An unmatched path returns 404. Slash
+member set. OPTIONS is not implicit. An unmatched path returns 404 unless an
+explicit [additional page source](content-pages.md) supplies its response. Slash
 redirects are disabled, so `/users/` does not match `/users` unless both paths
 exist independently. Use [Route inspection](route-inspection.md) and its
 `routes explain` command to inspect this selection without running a handler.

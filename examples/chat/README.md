@@ -38,8 +38,8 @@ GET,HEAD  /assets/<fingerprinted-path>
 Pyganini generates the page and action routes. `app/main.py` registers the SSE,
 browser-helper, and asset routes before mounting the generated router.
 
-The example vendors `htmx.org` `4.0.0-beta6` core and `hx-sse` from their
-[versioned distribution](https://cdn.jsdelivr.net/npm/htmx.org@4.0.0-beta6/dist/)
+The example vendors `htmx.org` `4.0.0` core and `hx-sse` from their
+[versioned distribution](https://cdn.jsdelivr.net/npm/htmx.org@4.0.0/dist/)
 and serves the fingerprinted files locally.
 
 ## Inspect and regenerate
