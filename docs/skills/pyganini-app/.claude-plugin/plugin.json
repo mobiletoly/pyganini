@@ -1,0 +1,11 @@
+{
+  "name": "pyganini-app",
+  "version": "0.1.0",
+  "description": "Build and maintain server-first Python applications with Pyganini.",
+  "author": {
+    "name": "Pyganini"
+  },
+  "homepage": "https://github.com/mobiletoly/pyganini",
+  "repository": "https://github.com/mobiletoly/pyganini",
+  "license": "Apache-2.0"
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pyganini App"
+  short_description: "Create and maintain Pyganini applications"
+  default_prompt: "Use $pyganini-app to create or make a focused change in this Pyganini application, including routes, Jinja layouts, HTMX workflows, and validation."

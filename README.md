@@ -291,6 +291,8 @@ in an AnyIO worker thread.
   inspection, and an application-owned Starlette host.
 - [Installation](docs/user/installation.md) covers Python support, package
   installation, runtime dependencies, and host ownership.
+- [Coding agents](docs/user/coding-agents.md) covers the installable Pyganini App
+  skill, Codex and Claude Code setup, and reusable application instructions.
 - [Project layout](docs/user/project-layout.md) covers the application marker,
   fixed source and generated paths, and file ownership.
 - [Command line](docs/user/cli.md) covers generation, non-writing checks, root

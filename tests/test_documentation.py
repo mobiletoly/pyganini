@@ -42,6 +42,7 @@ def test_public_onboarding_links_resolve() -> None:
     documents = (
         REPOSITORY / "README.md",
         REPOSITORY / "docs" / "user" / "getting-started.md",
+        REPOSITORY / "docs" / "user" / "coding-agents.md",
     )
     missing = [
         target
@@ -91,6 +92,7 @@ def test_user_guide_indexes_match_and_cover_all_guides() -> None:
     assert [target for _, target, _ in root_entries] == [
         "getting-started.md",
         "installation.md",
+        "coding-agents.md",
         "project-layout.md",
         "cli.md",
         "assets.md",

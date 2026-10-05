@@ -8,6 +8,8 @@ build an application.
   an application-owned Starlette host.
 - [Installation](installation.md) covers Python support, package installation,
   runtime dependencies, and host ownership.
+- [Coding agents](coding-agents.md) covers the installable Pyganini App
+  skill, Codex and Claude Code setup, and reusable application instructions.
 - [Project layout](project-layout.md) covers the application marker, fixed
   source and generated paths, and file ownership.
 - [Command line](cli.md) covers generation, non-writing checks, root selection,

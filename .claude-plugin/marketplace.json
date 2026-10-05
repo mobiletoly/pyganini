@@ -1,0 +1,18 @@
+{
+  "name": "pyganini",
+  "owner": {
+    "name": "Pyganini"
+  },
+  "description": "Claude Code tooling for applications built with Pyganini.",
+  "plugins": [
+    {
+      "name": "pyganini-app",
+      "source": {
+        "source": "git-subdir",
+        "url": "mobiletoly/pyganini",
+        "path": "docs/skills/pyganini-app"
+      },
+      "description": "Build and maintain server-first Python applications with Pyganini."
+    }
+  ]
+}
